@@ -208,15 +208,15 @@ const COLOR_LABELS: Record<string, string> = {
   '#0284C7': 'Azure'
 };
 
-const THEMES: Record<string, string> = {
-  VOID: '#6c63ff',
-  AURORA: '#38bdf8',
-  MATCHA: '#4ade80',
-  CYBERPUNK: '#f0abfc',
-  'MIDNIGHT OCEAN': '#0ea5e9',
-  SAKURA: '#f472b6',
-  EMBER: '#f97316',
-  MONOCHROME: '#e2e8f0',
+const THEMES: Record<string, {primary: string, secondary: string}> = {
+  VOID: { primary: '#6c63ff', secondary: '#c026d3' }, // Deep purple/pink
+  AURORA: { primary: '#38bdf8', secondary: '#34d399' }, // Cyan/Green
+  MATCHA: { primary: '#4ade80', secondary: '#fcd34d' }, // Green/Yellow
+  CYBERPUNK: { primary: '#f0abfc', secondary: '#fb923c' }, // Pink/Orange
+  'MIDNIGHT OCEAN': { primary: '#0ea5e9', secondary: '#1d4ed8' }, // Blues
+  SAKURA: { primary: '#f472b6', secondary: '#fda4af' }, // Pinks
+  EMBER: { primary: '#f97316', secondary: '#dc2626' }, // Orange/Red
+  MONOCHROME: { primary: '#e2e8f0', secondary: '#64748b' }, // Gray/Slate
 };
 
 const QUOTES = [
@@ -228,14 +228,14 @@ const QUOTES = [
 ];
 
 const THEME_SWATCHES: Record<string, string> = {
-  VOID: 'linear-gradient(135deg, #0f0f14, #1a1a2e)',
-  AURORA: 'linear-gradient(135deg, #0a0e1a, #0f172a)',
-  MATCHA: 'linear-gradient(135deg, #0d1410, #0f1f14)',
-  CYBERPUNK: 'linear-gradient(135deg, #0d0015, #1a0030)',
-  'MIDNIGHT OCEAN': 'linear-gradient(135deg, #020818, #0c1a35)',
-  SAKURA: 'linear-gradient(135deg, #160d12, #1e0f19)',
-  EMBER: 'linear-gradient(135deg, #130a00, #1f1200)',
-  MONOCHROME: 'linear-gradient(135deg, #0a0a0a, #111111)',
+  VOID: 'linear-gradient(135deg, #2d2b55, #1e1e3f)',
+  AURORA: 'linear-gradient(135deg, #1a2a4a, #1e3a5f)',
+  MATCHA: 'linear-gradient(135deg, #1a3a2a, #1f4a30)',
+  CYBERPUNK: 'linear-gradient(135deg, #3d1060, #1a0040)',
+  'MIDNIGHT OCEAN': 'linear-gradient(135deg, #0a2040, #102a55)',
+  SAKURA: 'linear-gradient(135deg, #3d1030, #2a0820)',
+  EMBER: 'linear-gradient(135deg, #3d1500, #2a0f00)',
+  MONOCHROME: 'linear-gradient(135deg, #2a2a2a, #1a1a1a)',
 };
 
 const HABIT_CATEGORIES = [
@@ -271,28 +271,29 @@ const INITIAL_HABITS: Habit[] = [
 
 // Watermark Background Component
 const WatermarkBackground = ({ pureBlack, theme }: { pureBlack?: boolean; theme: string }) => {
-  const color = THEMES[theme] || '#3B82F6';
+  const themeObj = THEMES[theme] || THEMES.VOID;
   return (
-    <div className={`fixed inset-0 overflow-hidden pointer-events-none z-0 ${pureBlack ? 'bg-black' : ''}`}>
+    <div className={`fixed inset-0 overflow-hidden pointer-events-none z-[-1] ${pureBlack ? 'bg-black' : 'bg-[#050510]'}`}>
       {!pureBlack && (
         <>
           <div 
-            className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-20"
-            style={{ background: color }}
+            className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[140px] opacity-[0.35]"
+            style={{ background: themeObj.primary }}
           />
           <div 
-            className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] rounded-full blur-[100px] opacity-15"
-            style={{ background: color }}
+            className="absolute top-[30%] -right-[15%] w-[50%] h-[70%] rounded-full blur-[160px] opacity-[0.25]"
+            style={{ background: themeObj.secondary }}
           />
           <div 
-            className="absolute -bottom-[5%] left-[20%] w-[25%] h-[25%] rounded-full blur-[90px] opacity-10"
-            style={{ background: color }}
+            className="absolute -bottom-[20%] left-[10%] w-[60%] h-[50%] rounded-full blur-[150px] opacity-[0.15]"
+            style={{ background: themeObj.primary }}
           />
           
           {/* Subtle noise texture overlay */}
-          <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none"
+          <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay pointer-events-none"
                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
           />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIvPPHBhdGggZD0iTTAgMGg0MHY0MEgwem00MCAwaC0xdjQwaDFWMHptMCA0MGgtNDB2LTFoNDB2MXoiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMSkiLz48L3N2Zz4=')] opacity-50 pointer-events-none" />
         </>
       )}
     </div>
@@ -306,7 +307,8 @@ const MemoizedHabitCard = React.memo(({
   onEdit, 
   onLongPress, 
   onLongPressCancel,
-  isQuickActionsOpen
+  isQuickActionsOpen,
+  theme
 }: { 
   habit: Habit; 
   idx: number; 
@@ -315,6 +317,7 @@ const MemoizedHabitCard = React.memo(({
   onLongPress: (e: React.PointerEvent, h: Habit) => void;
   onLongPressCancel: () => void;
   isQuickActionsOpen: boolean;
+  theme: string;
 }) => {
   const IconComponent = ICON_MAP[habit.icon] || Wind;
   const habitColor = habit.color;
@@ -350,7 +353,13 @@ const MemoizedHabitCard = React.memo(({
             {habit.name}
           </h3>
           <div className="flex items-center gap-1.5">
-            <div className="text-[10px] font-bold text-[#f97316] bg-[#f973161f] px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1">
+            <div 
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1"
+              style={{ 
+                color: (THEMES[theme] || THEMES.VOID).secondary,
+                backgroundColor: `${(THEMES[theme] || THEMES.VOID).secondary}1f`
+              }}
+            >
               <Flame size={10} />
               <span>{calculateStreak(habit)}</span>
             </div>
@@ -371,7 +380,18 @@ const MemoizedHabitCard = React.memo(({
               border: '1px solid rgba(255,255,255,0.08)',
               color: 'rgba(255,255,255,0.4)'
             };
-            let dayContent: React.ReactNode = dateNum;
+            let dayContent: React.ReactNode = (
+              <div className="relative flex items-center justify-center w-full h-full overflow-hidden">
+                <span className={`absolute top-0.5 right-1 text-[9px] font-black leading-none transition-opacity pointer-events-none z-10 drop-shadow-md ${isDone || isSkip ? 'text-white/50' : 'text-white'}`}>
+                  {dateNum}
+                </span>
+                {isDone && <Check size={14} strokeWidth={4} className="text-white drop-shadow-sm" />}
+                {isSkip && <Minus size={14} strokeWidth={4} className="text-red-400 drop-shadow-sm" />}
+                {isToday && !isDone && !isSkip && (
+                  <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: habitColor }} />
+                )}
+              </div>
+            );
 
             if (isDone) {
               dayCircleStyle = {
@@ -379,14 +399,12 @@ const MemoizedHabitCard = React.memo(({
                 border: 'none',
                 color: 'white',
               };
-              dayContent = <Check size={14} strokeWidth={4} />;
             } else if (isSkip) {
               dayCircleStyle = {
                 background: 'rgba(248,113,113,0.15)',
                 border: '1px solid rgba(248,113,113,0.3)',
                 color: '#f87171'
               };
-              dayContent = <Minus size={14} strokeWidth={4} />;
             } else if (isToday) {
               dayCircleStyle = {
                 background: 'rgba(108,99,255,0.12)',
@@ -396,22 +414,24 @@ const MemoizedHabitCard = React.memo(({
             }
 
             return (
-              <div key={dateStr} className="flex-1 flex flex-col items-center gap-[2px] p-[4px_2px] rounded-lg min-w-0 transition-all cursor-pointer group"
+              <button
+                key={dateStr}
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggle(habit.id, dateStr, e);
                 }}
+                className={`flex-1 flex flex-col items-center gap-[4px] p-[6px_2px] rounded-xl min-w-0 transition-all group ${isToday ? 'bg-white/5' : ''}`}
               >
-                <span className="text-[9px] font-medium uppercase text-white/30 leading-none">
+                <span className={`text-[8px] font-black uppercase tracking-tighter leading-none transition-colors ${isToday ? 'text-white' : 'text-white/20 group-hover:text-white/40'}`}>
                   {dayName}
                 </span>
                 <div
-                  className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[11px] font-semibold transition-all duration-200"
+                  className="w-[28px] h-[28px] rounded-lg flex items-center justify-center text-[10px] font-bold transition-all duration-200 shadow-sm"
                   style={dayCircleStyle}
                 >
                   {dayContent}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -420,31 +440,37 @@ const MemoizedHabitCard = React.memo(({
   );
 });
 
-const DetailStats = React.memo(({ totalDone, streak, bestStreak }: { totalDone: number; streak: number; bestStreak: number }) => (
-  <div className="grid grid-cols-3 gap-3">
-    <div className="p-4 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
-      <div className="text-white/50 text-[10px] uppercase tracking-widest font-bold mb-1">Success</div>
-      <div className="text-2xl font-black text-emerald-400">{totalDone}</div>
-    </div>
-    <div className="p-4 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
-      <div className="text-white/50 text-[10px] uppercase tracking-widest font-bold mb-1">Streak</div>
-      <div className="text-2xl font-black flex items-center gap-1.5">
-        {streak} 
-        <Flame className="w-5 h-5 text-orange-500" />
+const DetailStats = React.memo(({ totalDone, streak, bestStreak, completionRate }: { totalDone: number; streak: number; bestStreak: number; completionRate: number }) => (
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="p-4 rounded-2xl glass-panel flex flex-col justify-between">
+      <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+        <Check size={12} className="text-emerald-400" /> Total Logs
       </div>
+      <div className="text-[26px] font-black text-emerald-400">{totalDone}</div>
     </div>
-    <div className="p-4 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
-      <div className="text-white/50 text-[10px] uppercase tracking-widest font-bold mb-1">Best</div>
-      <div className="text-2xl font-black flex items-center gap-1.5">
-        {bestStreak} 
-        <Star className="w-5 h-5 text-yellow-500" />
+    <div className="p-4 rounded-2xl glass-panel flex flex-col justify-between">
+      <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+        <Activity size={12} className="text-blue-400" /> Rate
       </div>
+      <div className="text-[26px] font-black text-blue-400">{completionRate}%</div>
+    </div>
+    <div className="p-4 rounded-2xl glass-panel flex flex-col justify-between">
+      <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+        <Flame size={12} className="text-orange-500" /> Cur Streak
+      </div>
+      <div className="text-[26px] font-black text-white">{streak}</div>
+    </div>
+    <div className="p-4 rounded-2xl glass-panel flex flex-col justify-between">
+      <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+        <Star size={12} className="text-yellow-500" /> Max Streak
+      </div>
+      <div className="text-[26px] font-black text-white">{bestStreak}</div>
     </div>
   </div>
 ));
 
 const VoyageMap = React.memo(({ heatmapWeeks, habitColor }: { heatmapWeeks: any[][]; habitColor: string }) => (
-  <div className="p-5 sm:p-6 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
+  <div className="p-5 sm:p-6 rounded-2xl glass-panel">
       <div className="flex items-center justify-between mb-4">
           <h4 className="text-[17px] font-bold uppercase tracking-tight">90-Day Voyage Map</h4>
           <div className="flex items-center gap-2">
@@ -497,7 +523,7 @@ const VoyageMap = React.memo(({ heatmapWeeks, habitColor }: { heatmapWeeks: any[
 ));
 
 const WeeklyCompletionChart = React.memo(({ weeklyData, habitColor }: { weeklyData: any[]; habitColor: string }) => (
-  <div className="p-5 sm:p-6 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
+  <div className="p-5 sm:p-6 rounded-2xl glass-panel">
     <div className="flex items-center justify-between mb-6">
         <h4 className="text-[17px] font-bold uppercase tracking-tight">6-Week Completion</h4>
         <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
@@ -545,7 +571,7 @@ const CalendarCellGrid = React.memo(({ cells, habitColor, onToggle }: {
   habitColor: string; 
   onToggle: (date: string, e: any) => void;
 }) => (
-  <div className="p-5 sm:p-6 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
+  <div className="p-5 sm:p-6 rounded-2xl glass-panel">
     <h4 className="text-[17px] font-medium leading-tight mb-5">Past 6 Weeks</h4>
     <div className="grid grid-cols-7 gap-2 mb-3">
       {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
@@ -584,6 +610,23 @@ const CalendarCellGrid = React.memo(({ cells, habitColor, onToggle }: {
     </div>
   </div>
 ));
+
+const ToggleSwitch = ({ checked, onChange, themeColor }: { checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, themeColor: string }) => (
+  <label className="toggle-switch">
+    <input 
+      type="checkbox" 
+      className="toggle-input" 
+      checked={checked} 
+      onChange={onChange} 
+    />
+    <span 
+      className="toggle-track" 
+      style={checked ? { background: themeColor } : {}}
+    >
+      <span className="toggle-thumb" />
+    </span>
+  </label>
+);
 
 export default function App() {
   const [habits, setHabits] = useState<Habit[]>(() => {
@@ -800,7 +843,7 @@ export default function App() {
         const ds = d.toISOString().split('T')[0];
         const status = logs[ds] || 'empty';
         chartData.push({
-            name: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            name: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
             completed: status === 'done' ? 1 : 0,
             status: status
         });
@@ -953,8 +996,12 @@ export default function App() {
   const requestNotificationPermission = async () => {
     if (!("Notification" in window)) return false;
     if (Notification.permission === "granted") return true;
-    const permission = await Notification.requestPermission();
-    return permission === "granted";
+    try {
+      const permission = await Notification.requestPermission();
+      return permission === "granted";
+    } catch {
+      return false;
+    }
   };
 
   let audioCtx: AudioContext | null = null;
@@ -1196,17 +1243,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
   };
 
   const getGlassStyle = () => {
-    const glassColor = `rgba(255, 255, 255, ${0.05 + settings.glassBlur * 0.002})`;
     return {
-      backdropFilter: `blur(${settings.glassBlur}px)`,
-      WebkitBackdropFilter: `blur(${settings.glassBlur}px)`,
-      backgroundColor: `rgba(255, 255, 255, ${0.01 + settings.glassBlur * 0.0025})`,
-      borderTopColor: glassColor,
-      borderRightColor: glassColor,
-      borderBottomColor: glassColor,
-      borderLeftColor: glassColor,
-      backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20 Q 10 10 20 20 T 40 20' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3C/svg%3E")`
-    };
+      '--glass-blur': `${settings.glassBlur}px`,
+      '--glass-intensity': settings.glassIntensity / 10,
+    } as React.CSSProperties;
   };
 
   const quickUpdateHabitStatus = (habitId: string, status: HabitStatus) => {
@@ -1243,11 +1283,13 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
   return (
     <div 
-      className="min-h-screen relative text-white font-sans selection:bg-white selection:text-black transition-colors duration-500 overflow-hidden bg-theme-bg"
+      className="min-h-screen relative text-white font-sans transition-colors duration-500 overflow-hidden bg-theme-bg"
       style={{ 
         backgroundColor: settings.pureBlack ? 'var(--tw-color-black)' : 'var(--theme-bg)',
         '--glass-intensity': settings.glassIntensity / 10,
-        '--glass-blur': `${settings.glassBlur}px`
+        '--glass-blur': `${settings.glassBlur}px`,
+        '--theme-accent': (THEMES[settings.theme] || THEMES.VOID).primary,
+        '--theme-accent2': (THEMES[settings.theme] || THEMES.VOID).secondary,
       } as React.CSSProperties}
     >
       {/* Quick Actions Menu Overlay */}
@@ -1328,9 +1370,9 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               <motion.h1 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-xl font-black tracking-tighter text-white"
+                className="text-[20px] font-[900] tracking-[-0.5px] text-white"
               >
-                CORE.
+                GRAND LINE.
               </motion.h1>
               <div className="flex items-center gap-2">
                 <button
@@ -1338,9 +1380,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     playSound('bell');
                     setShowAddModal(true);
                   }}
-                  className="flex items-center gap-[6px] px-[14px] rounded-[10px] bg-[#6c63ff] text-white text-[12px] font-bold tracking-[0.5px] border-none h-[34px] transition-transform hover:scale-105 active:scale-95"
+                  className="flex items-center justify-center w-[34px] h-[34px] rounded-full text-white border-none transition-transform hover:scale-105 active:scale-95 shadow-lg"
+                  style={{ backgroundColor: (THEMES[settings.theme] || THEMES.VOID).primary }}
                 >
-                  ＋ EMBARK
+                  <Plus size={18} strokeWidth={3} />
                 </button>
                 <motion.button 
                   whileHover={{ rotate: 10, scale: 1.1 }}
@@ -1363,56 +1406,35 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </span>
-              <span className="text-[10px] font-black text-white/60">
+              <span className="text-[10px] font-black text-white/80">
                 {habits.filter(h => h.logs?.[getTodayStr()] === 'done').length}/{habits.length} quests complete
               </span>
             </div>
-            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden shadow-inner">
                <motion.div 
                  initial={{ width: 0 }}
                  animate={{ width: `${(habits.filter(h => h.logs?.[getTodayStr()] === 'done').length / Math.max(1, habits.length)) * 100}%` }}
-                 className="h-full transition-all duration-700"
-                 style={{ backgroundColor: THEMES[settings.theme] || '#3B82F6' }}
+                 className="h-full transition-all duration-1000 ease-out"
+                 style={{ 
+                   background: `linear-gradient(90deg, ${(THEMES[settings.theme] || THEMES.VOID).primary}, ${(THEMES[settings.theme] || THEMES.VOID).secondary})` 
+                 }}
                />
             </div>
           </div>
 
           {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-2.5 mb-8">
+          <div className="grid grid-cols-3 gap-1.5 mb-6">
             {[
-              { label: 'Total Habits', value: habits.length },
-              { label: 'Done Today', value: habits.filter(h => h.logs?.[getTodayStr()] === 'done').length },
-              { label: 'Best Streak', value: Math.max(0, ...habits.map(h => calculateStreak(h)), 0) }
+              { label: 'Total', value: habits.length },
+              { label: 'Today', value: habits.filter(h => h.logs?.[getTodayStr()] === 'done').length },
+              { label: 'Streak', value: Math.max(0, ...habits.map(h => calculateStreak(h)), 0) }
             ].map((stat, i) => (
-              <div key={i} className="p-3 bg-white/5 border border-white/10 rounded-2xl">
-                <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.05em] mb-1">{stat.label}</p>
-                <p className="text-[20px] font-black text-white leading-none tracking-tight">{stat.value}</p>
+              <div key={i} className="p-2 bg-white/5 border border-white/10 rounded-lg">
+                <p className="text-[8px] font-bold text-white/30 uppercase tracking-[0.05em] mb-0.5">{stat.label}</p>
+                <p className="text-base font-black text-white leading-none tracking-tight">{stat.value}</p>
               </div>
             ))}
           </div>
-
-          {/* Filter & Sort Bar */}
-          <motion.div 
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-2 mb-4"
-          >
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 w-full sm:w-auto">
-              {['All', ...HABIT_CATEGORIES].map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setFilterCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
-                    filterCategory === cat 
-                      ? 'bg-white text-black border-white shadow-lg shadow-white/10' 
-                      : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10 hover:text-white/60'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </motion.div>
 
           {/* Habit List */}
           <div className="space-y-12 mb-12">
@@ -1429,10 +1451,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     return (
                       <div key={folder.id} className="space-y-4">
                         <div className="flex items-center gap-3 px-1">
-                           <Folder size={16} style={{ color: THEMES[settings.theme] || '#3B82F6' }} />
-                           <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-white/60">{folder.name}</h3>
+                           <Folder size={16} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
+                           <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-white/80">{folder.name}</h3>
                            <div className="h-px flex-1 bg-white/5" />
-                           <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">{habitsInFolder.length} Quests</span>
+                           <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{habitsInFolder.length} Quests</span>
                         </div>
                         <div className="space-y-[10px]">
                            {habitsInFolder.map((h, i) => (
@@ -1445,6 +1467,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                onLongPress={handlePointerDown}
                                onLongPressCancel={handlePointerUpOrCancel}
                                isQuickActionsOpen={!!quickActions}
+                               theme={settings.theme}
                              />
                            ))}
                         </div>
@@ -1473,6 +1496,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                              onLongPress={handlePointerDown}
                              onLongPressCancel={handlePointerUpOrCancel}
                              isQuickActionsOpen={!!quickActions}
+                             theme={settings.theme}
                           />
                         ))}
                       </div>
@@ -1510,7 +1534,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               <button 
                 onClick={undoAction}
                 className="px-3 py-1.5 rounded-lg bg-theme-accent text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5"
-                style={{ backgroundColor: THEMES[settings.theme] || '#3B82F6' }}
+                style={{ backgroundColor: (THEMES[settings.theme] || THEMES.VOID).primary }}
               >
                 <RotateCcw size={12} />
                  Undo
@@ -1531,7 +1555,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-0 z-[100] text-white overflow-y-auto no-scrollbar modal"
-            style={{ backgroundColor: 'var(--bg-primary)', WebkitOverflowScrolling: 'touch' }}
+            style={{ backgroundColor: '#0f0f14', WebkitOverflowScrolling: 'touch' }}
           >
             <WatermarkBackground pureBlack={settings.pureBlack} theme={settings.theme} />
             {/* Header */}
@@ -1552,38 +1576,61 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               
               {/* Appearance Section */}
               <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <Palette size={18} className="text-white/40" />
-                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Appearance</h3>
+                <div className="flex items-center gap-2 mb-6 ml-2">
+                  <Palette size={18} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
+                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }}>Appearance</h3>
                 </div>
                 
-                <div className="p-5 rounded-[28px] border border-white/10 bg-white/[0.03] space-y-8">
+                <div className="p-6 rounded-[32px] border border-white/15 bg-white/[0.05] shadow-2xl space-y-8">
                   {/* Theme Palette */}
                   <div>
-                    <div className="mb-4">
-                       <h4 className="text-[17px] text-white font-medium leading-tight">Theme Palette</h4>
-                       <p className="text-white/60 text-[14px] mt-1 leading-snug">Choose a global aesthetic theme.</p>
+                    <div className="mb-5 ml-1">
+                       <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Theme Palette</h4>
+                       <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Choose a global aesthetic theme.</p>
                     </div>
                     
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                       {Object.entries(THEME_SWATCHES).map(([name, gradient]) => {
                         const isActive = settings.theme === name;
-                        const accent = THEMES[name];
+                        const accent = THEMES[name].primary;
                         return (
                           <button
                             key={name}
                             onClick={() => setSettings(s => ({ ...s, theme: name as keyof typeof THEMES }))}
-                            className={`relative h-[70px] rounded-[16px] overflow-hidden text-left focus:outline-none transition-all ${isActive ? 'border-2 border-white scale-105 z-10' : 'border-2 border-transparent scale-100 opacity-80 hover:opacity-100'}`}
+                            className={`relative h-[90px] rounded-[14px] overflow-hidden text-left focus:outline-none transition-all duration-300 ${isActive ? 'scale-105 z-10' : 'scale-100'}`}
                             style={{
                               background: gradient,
-                              boxShadow: isActive ? `0 0 20px ${accent}60` : 'none'
+                              border: isActive ? '2px solid #ffffff' : '2px solid rgba(255,255,255,0.15)',
+                              boxShadow: isActive ? `0 0 20px rgba(255,255,255,0.2), 0 0 40px ${accent}4d` : 'none',
+                              padding: '16px'
                             }}
                           >
-                            <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white tracking-widest uppercase">{name}</span>
-                            <div className="absolute bottom-2 right-2 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }}></div>
+                            {/* Mini Preview Strips */}
+                            <div className="absolute top-[10px] left-[10px] flex flex-col gap-[3px]">
+                              <div className="w-[60px] h-[6px] rounded-[3px] bg-white/20" />
+                              <div className="w-[44px] h-[6px] rounded-[3px] bg-white/20" />
+                              <div className="w-[52px] h-[6px] rounded-[3px] bg-white/20" />
+                            </div>
+
+                            <span 
+                              className="absolute bottom-[12px] left-[12px] text-[12px] font-[800] tracking-[1.5px] uppercase"
+                              style={{ 
+                                color: '#ffffff',
+                                WebkitTextFillColor: '#ffffff',
+                                textShadow: '0 1px 4px rgba(0,0,0,0.8)'
+                              }}
+                            >
+                              {name}
+                            </span>
+                            
+                            <div 
+                              className="absolute bottom-[14px] right-[12px] w-[10px] h-[10px] rounded-full" 
+                              style={{ backgroundColor: accent, boxShadow: `0 0 8px ${accent}` }}
+                            />
+                            
                             {isActive && (
-                              <div className="absolute top-2 right-2 bg-white text-black rounded-full p-[2px]">
-                                <Check size={8} strokeWidth={5} />
+                              <div className="absolute top-[8px] right-[8px] w-[22px] h-[22px] bg-white text-black rounded-full flex items-center justify-center shadow-lg font-bold text-[12px]">
+                                ✓
                               </div>
                             )}
                           </button>
@@ -1597,27 +1644,22 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                   {/* Pure Black Toggle */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="pr-4">
-                      <h4 className="text-[17px] text-white font-medium leading-tight">True Noir Mode</h4>
-                      <p className="text-white/60 text-[14px] mt-1 leading-snug">Use pure OLED black for backgrounds. Saves battery and increases contrast.</p>
+                      <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>True Noir Mode</h4>
+                      <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Use pure OLED black for backgrounds. Saves battery and increases contrast.</p>
                     </div>
-                    <button
-                      onClick={() => setSettings(s => ({ ...s, pureBlack: !s.pureBlack }))}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${settings.pureBlack ? 'bg-blue-500' : 'bg-neutral-600'}`}
-                      style={{ backgroundColor: settings.pureBlack ? (THEMES[settings.theme] || '#3B82F6') : undefined }}
-                    >
-                      <motion.span
-                        className="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200"
-                        animate={{ x: settings.pureBlack ? 20 : 0 }}
-                      />
-                    </button>
+                    <ToggleSwitch 
+                      checked={settings.pureBlack} 
+                      onChange={(e) => setSettings(s => ({ ...s, pureBlack: e.target.checked }))} 
+                      themeColor={(THEMES[settings.theme] || THEMES.VOID).primary} 
+                    />
                   </div>
 
                   <div className="h-px bg-white/5" />
 
                   {/* Glass Effect */}
                   <div>
-                    <h4 className="text-[17px] text-white font-medium leading-tight">Vitreous Intensity</h4>
-                    <p className="text-white/60 text-[14px] mt-1 leading-snug">Adjust the transparency and blur of glass panels.</p>
+                    <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Vitreous Intensity</h4>
+                    <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Adjust the transparency and blur of glass panels.</p>
                     <input
                       type="range"
                       min="0"
@@ -1627,7 +1669,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                       onChange={(e) => setSettings(s => ({ ...s, glassIntensity: parseInt(e.target.value) }))}
                       className="glass-slider mt-6"
                       style={{ 
-                        background: `linear-gradient(90deg, ${THEMES[settings.theme]} ${settings.glassIntensity * 10}%, rgba(255,255,255,0.1) ${settings.glassIntensity * 10}%)`
+                        background: `linear-gradient(90deg, ${(THEMES[settings.theme] || THEMES.VOID).primary} ${settings.glassIntensity * 10}%, rgba(255,255,255,0.1) ${settings.glassIntensity * 10}%)`
                       }}
                     />
                     <div className="flex justify-between text-[10px] font-bold text-white/30 mt-3 tracking-widest uppercase">
@@ -1640,27 +1682,32 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
               {/* Reminders Section */}
               <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <Bell size={18} className="text-white/40" />
-                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Reminders</h3>
+                <div className="flex items-center gap-2 mb-6 ml-2">
+                  <Bell size={18} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
+                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }}>Reminders</h3>
                 </div>
                 
-                <div className="p-5 rounded-[28px] border border-white/10 bg-white/[0.03] space-y-6">
-                  <div className="flex items-start justify-between gap-4">
+                <div className="p-6 rounded-[32px] border border-white/15 bg-white/[0.05] shadow-2xl space-y-6">
+                  <div className="flex items-center justify-between gap-4 px-1">
                     <div className="pr-4">
-                      <h4 className="text-[17px] text-white font-medium leading-tight">Global Notifications</h4>
-                      <p className="text-white/60 text-[14px] mt-1 leading-snug">Enable or disable all quest reminders globally.</p>
+                      <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Global Notifications</h4>
+                      <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Enable or disable all quest reminders globally.</p>
                     </div>
-                    <button
-                      onClick={() => setSettings(s => ({ ...s, remindersEnabled: !s.remindersEnabled }))}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${settings.remindersEnabled ? 'bg-blue-500' : 'bg-neutral-600'}`}
-                      style={{ backgroundColor: settings.remindersEnabled ? (THEMES[settings.theme] || '#3B82F6') : undefined }}
-                    >
-                      <motion.span
-                        className="inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200"
-                        animate={{ x: settings.remindersEnabled ? 20 : 0 }}
-                      />
-                    </button>
+                    <ToggleSwitch 
+                      checked={settings.remindersEnabled} 
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSettings(s => ({ ...s, remindersEnabled: checked }));
+                        if (checked && 'Notification' in window) {
+                          try {
+                            Notification.requestPermission().catch(() => {});
+                          } catch (err) {
+                            console.log('Notifications not supported in this context');
+                          }
+                        }
+                      }} 
+                      themeColor={(THEMES[settings.theme] || THEMES.VOID).primary} 
+                    />
                   </div>
                   
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5">
@@ -1671,53 +1718,53 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                   </div>
                 </div>
               </section>
-
-              {/* Data Management Section */}
+ 
+               {/* Data Management Section */}
               <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <Database size={18} className="text-white/40" />
-                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Data Management</h3>
+                <div className="flex items-center gap-2 mb-6 ml-2">
+                  <Database size={18} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
+                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }}>Data Management</h3>
                 </div>
                 
-                <div className="p-5 rounded-[28px] border border-white/10 bg-white/[0.03] space-y-4">
+                <div className="p-6 rounded-[32px] border border-white/15 bg-white/[0.05] shadow-2xl space-y-4">
                   <button 
                     onClick={exportData}
-                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 group"
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group"
                   >
                     <div className="flex items-center gap-3">
                       <Download size={18} className="text-emerald-400" />
                       <div className="text-left">
-                        <span className="block text-[15px] font-medium text-white">Export Backup</span>
-                        <span className="block text-[12px] text-white/40">Save your data to a JSON file.</span>
+                        <span className="block text-[15px] font-bold text-white" style={{ color: '#ffffff' }}>Export Backup</span>
+                        <span className="block text-[12px] text-white font-medium" style={{ color: '#ffffff' }}>Save your data to a JSON file.</span>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-white/20 group-hover:text-white/40 transition-colors" />
+                    <ChevronRight size={16} className="text-white/20 group-hover:text-white/60 transition-colors" />
                   </button>
-
-                  <label className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 group cursor-pointer">
+ 
+                  <label className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group cursor-pointer">
                     <div className="flex items-center gap-3">
                       <Upload size={18} className="text-blue-400" />
                       <div className="text-left">
-                        <span className="block text-[15px] font-medium text-white">Import Backup</span>
-                        <span className="block text-[12px] text-white/40">Restore from a previous backup file.</span>
+                        <span className="block text-[15px] font-bold text-white" style={{ color: '#ffffff' }}>Import Backup</span>
+                        <span className="block text-[12px] text-white font-medium" style={{ color: '#ffffff' }}>Restore from a previous backup file.</span>
                       </div>
                     </div>
                     <input type="file" accept=".json" onChange={importData} className="hidden" />
-                    <ChevronRight size={16} className="text-white/20 group-hover:text-white/40 transition-colors" />
+                    <ChevronRight size={16} className="text-white/20 group-hover:text-white/60 transition-colors" />
                   </label>
-
+ 
                   <button 
                     onClick={resetData}
-                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-red-500/5 hover:bg-red-500/10 transition-all border border-red-500/10 group"
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-red-500/5 hover:bg-red-500/10 transition-all border border-red-500/20 group"
                   >
                     <div className="flex items-center gap-3">
                       <Skull size={18} className="text-red-500" />
                       <div className="text-left">
-                        <span className="block text-[15px] font-medium text-red-500">Purge Memory</span>
-                        <span className="block text-[12px] text-red-500/50">Delete all data permanently.</span>
+                        <span className="block text-[15px] font-bold text-red-500" style={{ color: '#ef4444' }}>Purge Memory</span>
+                        <span className="block text-[12px] text-red-400 font-medium" style={{ color: '#f87171' }}>Delete all data permanently.</span>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-red-500/20 group-hover:text-red-500/40 transition-colors" />
+                    <ChevronRight size={16} className="text-red-500/20 group-hover:text-red-500/60 transition-colors" />
                   </button>
                 </div>
               </section>
@@ -1763,7 +1810,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 disabled={!newName.trim()}
                 className="text-[13px] font-black uppercase tracking-[0.1em] px-4 py-1.5 rounded-full disabled:opacity-20 transition-all active:scale-95"
                 style={{ 
-                  backgroundColor: `${THEMES[settings.theme] || '#3B82F6'}CC`,
+                  backgroundColor: `${(THEMES[settings.theme] || THEMES.VOID).primary}CC`,
                   color: '#ffffff'
                 }}
               >
@@ -1772,49 +1819,52 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             </div>
 
             {/* Form Content */}
-            <div className="px-4 py-6 pb-32 max-w-lg mx-auto space-y-6">
+            <div className="px-4 py-8 pb-40 max-w-lg mx-auto space-y-6">
               
-              {/* General Section */}
-              <section className="modal-section">
-                <h3 className="section-label text-[11px] font-black uppercase tracking-[1.5px] mb-3 ml-1" style={{ color: 'rgba(255,255,255,0.6)' }}>General</h3>
-                
-                <div className="p-4 rounded-[28px] border border-white/10 bg-white/[0.03] space-y-4">
-                  <div>
-                    <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-1.5 uppercase tracking-[1.5px]">Identity</h4>
-                    <input 
-                      type="text" 
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      onFocus={() => setActiveInput('name')}
-                      onBlur={() => setActiveInput(null)}
-                      placeholder="E.g., Morning Meditation"
-                      className="w-full bg-white/[0.08] border-2 px-4 py-3 rounded-[18px] text-[15px] font-medium text-white placeholder:text-white/40 focus:outline-none transition-all"
-                      style={{ 
-                        borderColor: activeInput === 'name' ? newColor : 'rgba(255,255,255,0.2)',
-                        boxShadow: activeInput === 'name' ? `0 0 12px ${newColor}40` : 'none'
-                      }}
-                    />
-                  </div>
+              {/* Identity & Intent */}
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
+                  <Star size={12} /> Identity & Intent
+                </h3>
+                <div className="space-y-3">
+                  <input 
+                    type="text" 
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onFocus={() => setActiveInput('name')}
+                    onBlur={() => setActiveInput(null)}
+                    placeholder="Quest Title (e.g., Morning Meditation)"
+                    className="w-full bg-black/40 border-2 px-4 py-3 rounded-xl text-[15px] font-bold text-white placeholder:text-white/30 focus:outline-none transition-all"
+                    style={{ 
+                      borderColor: activeInput === 'name' ? newColor : 'rgba(255,255,255,0.05)',
+                      boxShadow: activeInput === 'name' ? `0 0 12px ${newColor}20` : 'none'
+                    }}
+                  />
                   
-                  <div>
-                    <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-1.5 uppercase tracking-[1.5px]">Intent</h4>
-                    <input 
-                      type="text" 
-                      value={newIntent}
-                      onChange={(e) => setNewIntent(e.target.value)}
-                      onFocus={() => setActiveInput('intent')}
-                      onBlur={() => setActiveInput(null)}
-                      placeholder="Why does this matter?"
-                      className="w-full bg-white/[0.08] border-2 px-4 py-3 rounded-[18px] text-[14px] font-medium text-white placeholder:text-white/40 placeholder:italic focus:outline-none transition-all"
-                      style={{ 
-                        borderColor: activeInput === 'intent' ? newColor : 'rgba(255,255,255,0.2)',
-                        boxShadow: activeInput === 'intent' ? `0 0 12px ${newColor}40` : 'none'
-                      }}
-                    />
-                  </div>
+                  <input 
+                    type="text" 
+                    value={newIntent}
+                    onChange={(e) => setNewIntent(e.target.value)}
+                    onFocus={() => setActiveInput('intent')}
+                    onBlur={() => setActiveInput(null)}
+                    placeholder="Why does this matter?"
+                    className="w-full bg-black/40 border-2 px-4 py-3 rounded-xl text-[13px] font-medium text-white placeholder:text-white/30 placeholder:italic focus:outline-none transition-all"
+                    style={{ 
+                      borderColor: activeInput === 'intent' ? newColor : 'rgba(255,255,255,0.05)',
+                      boxShadow: activeInput === 'intent' ? `0 0 12px ${newColor}20` : 'none'
+                    }}
+                  />
+                </div>
+              </section>
 
+              {/* Path & Folder */}
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
+                  <Folder size={12} /> Placement
+                </h3>
+                <div className="space-y-4">
                   <div>
-                    <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-2 uppercase tracking-[1.5px]">Path Category</h4>
+                    <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Path Category</h4>
                     <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
                       {HABIT_CATEGORIES.map(cat => {
                         const isSelected = newCategory === cat;
@@ -1824,8 +1874,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             onClick={() => setNewCategory(cat)}
                             className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
                               isSelected 
-                                ? 'bg-white/20 text-white border-white/20 shadow-lg' 
-                                : 'bg-white/5 text-white/40 border-transparent hover:bg-white/10 hover:text-white/60'
+                                ? 'bg-white/20 text-white border-white/20 shadow-md' 
+                                : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
                             }`}
                           >
                             {cat}
@@ -1837,14 +1887,14 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
                   {folders.length > 0 && (
                     <div>
-                      <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-2 uppercase tracking-[1.5px]">Assign to Folder</h4>
+                      <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Assign Folder</h4>
                       <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
                         <button
                           onClick={() => setNewFolderId(null)}
                           className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
                             newFolderId === null 
-                              ? 'bg-white/20 text-white border-white/20 shadow-lg' 
-                              : 'bg-white/5 text-white/40 border-transparent hover:bg-white/10 hover:text-white/60'
+                              ? 'bg-white/20 text-white border-white/20 shadow-md' 
+                              : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
                           }`}
                         >
                           None
@@ -1857,8 +1907,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                               onClick={() => setNewFolderId(folder.id)}
                               className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border flex items-center gap-1.5 ${
                                 isSelected 
-                                  ? 'bg-white/20 text-white border-white/20 shadow-lg' 
-                                  : 'bg-white/5 text-white/40 border-transparent hover:bg-white/10 hover:text-white/60'
+                                  ? 'bg-white/20 text-white border-white/20 shadow-md' 
+                                  : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
                               }`}
                             >
                               <Folder size={10} />
@@ -1872,39 +1922,35 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 </div>
               </section>
 
-              {/* Appearance Section */}
-              <section className="modal-section">
-                <h3 className="section-label text-[11px] font-black uppercase tracking-[1.5px] mb-3 ml-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Appearance</h3>
-                
-                <div className="p-4 rounded-[28px] border border-white/10 bg-white/[0.03] space-y-6">
-                  {/* Color Selection */}
+              {/* Appearance */}
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
+                  <Wind size={12} /> Appearance
+                </h3>
+                <div className="space-y-4">
                   <div>
-                    <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-3 uppercase tracking-[1.5px]">Color Shade</h4>
-                    <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x no-scrollbar">
+                    <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Color Shade</h4>
+                    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-2 snap-x no-scrollbar">
                       {ACCENT_COLORS.map(color => (
-                        <div key={color} className="flex flex-col items-center gap-1.5 shrink-0 snap-center">
+                        <div key={color} className="flex flex-col items-center shrink-0 snap-center p-1.5">
                           <button
                             onClick={() => setNewColor(color)}
-                            className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center transition-all ${
-                              newColor === color ? 'scale-110 ring-2 ring-offset-2 ring-offset-black' : 'opacity-60 hover:opacity-100'
+                            className={`w-5 h-5 rounded-full shrink-0 transition-all duration-300 flex items-center justify-center ${
+                              newColor === color 
+                                ? 'scale-110 ring-2 ring-white ring-offset-2 ring-offset-black shadow-lg shadow-black/50' 
+                                : 'opacity-40 hover:opacity-100 scale-100'
                             }`}
-                            style={{ 
-                              backgroundColor: color,
-                              borderColor: newColor === color ? color : 'transparent' 
-                            }}
-                          >
-                            {newColor === color && <Check size={14} className="text-white drop-shadow-md" strokeWidth={4} />}
-                          </button>
-                          <span className="color-label text-[10px] uppercase font-bold tracking-wider text-white">{COLOR_LABELS[color]}</span>
+                            style={{ backgroundColor: color }}
+                            aria-label={`Select color ${color}`}
+                          />
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Icons Selection */}
                   <div>
-                    <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-3 uppercase tracking-[1.5px]">Ritual Icon</h4>
-                    <div className="grid grid-cols-5 gap-2">
+                    <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Ritual Icon</h4>
+                    <div className="grid grid-cols-6 gap-2">
                       {(Object.keys(ICON_MAP) as Array<keyof typeof ICON_MAP>).map(iconKey => {
                         const Icon = ICON_MAP[iconKey];
                         const isSelected = newIcon === iconKey;
@@ -1912,20 +1958,19 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           <button
                             key={iconKey}
                             onClick={() => setNewIcon(iconKey)}
-                            className={`aspect-square rounded-[16px] flex items-center justify-center transition-all border ${
+                            className={`aspect-square rounded-xl flex items-center justify-center transition-all border ${
                               isSelected 
-                                ? 'scale-105 shadow-lg' 
-                                : 'border-transparent opacity-50 hover:opacity-80'
+                                ? 'scale-105 shadow-md bg-white/10' 
+                                : 'border-transparent opacity-40 hover:opacity-80 bg-black/20'
                             }`}
                             style={{
-                              backgroundColor: isSelected ? `${newColor}20` : 'rgba(255,255,255,0.05)',
                               borderColor: isSelected ? newColor : 'transparent',
                               color: isSelected ? newColor : '#ffffff',
-                              boxShadow: isSelected ? `0 0 12px ${newColor}40` : undefined,
-                              opacity: isSelected ? 1 : 0.5
+                              boxShadow: isSelected ? `0 0 10px ${newColor}30` : undefined,
+                              opacity: isSelected ? 1 : 0.4
                             }}
                           >
-                            <Icon size={20} strokeWidth={isSelected ? 3 : 2} />
+                            <Icon size={16} strokeWidth={isSelected ? 3 : 2} />
                           </button>
                         );
                       })}
@@ -1934,72 +1979,74 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 </div>
               </section>
 
-              {/* Logistics Section */}
-              <section className="modal-section">
-                <h3 className="section-label text-[11px] font-black uppercase tracking-[1.5px] mb-3 ml-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Logistics</h3>
-                <div className="p-4 rounded-[28px] border border-white/10 bg-white/[0.03] space-y-4">
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-xl ${newReminderActive ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-white/40'}`}>
-                        <Timer size={18} />
-                      </div>
-                      <div>
-                        <h4 className="section-label text-[14px] font-bold text-white">Daily Reminder</h4>
-                        <p className="hint-text text-[11px] text-white/50">Get notified when it's time.</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setNewReminderActive(!newReminderActive)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${newReminderActive ? 'bg-blue-500' : 'bg-white/10'}`}
-                    >
-                      <motion.span
-                        className="inline-block h-5 w-5 transform rounded-full bg-white shadow"
-                        animate={{ x: newReminderActive ? 20 : 0 }}
-                      />
-                    </button>
-                  </div>
-
-                  {newReminderActive && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="px-2 pb-2 space-y-4"
-                    >
-                      <input 
-                        type="time" 
-                        value={newReminderTime}
-                        onChange={(e) => setNewReminderTime(e.target.value)}
-                        className="w-full bg-white/[0.08] border-2 border-white/20 px-4 py-3 rounded-[18px] text-[15px] font-medium text-white focus:outline-none focus:border-blue-500 transition-all"
-                      />
-
-                      <div>
-                        <p className="section-label text-[10px] uppercase font-bold text-white/40 mb-2 ml-1">Reminder Days</p>
-                        <div className="flex justify-between gap-1">
-                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => {
-                            const isSelected = newReminderDays.includes(i);
-                            return (
-                              <button
-                                key={i}
-                                onClick={() => {
-                                  if (isSelected) setNewReminderDays(newReminderDays.filter(d => d !== i));
-                                  else setNewReminderDays([...newReminderDays, i]);
-                                }}
-                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold transition-all border ${
-                                  isSelected ? 'bg-blue-500 border-blue-400 text-white shadow-lg shadow-blue-500/20' : 'bg-white/5 border-white/10 text-white/30'
-                                }`}
-                              >
-                                {day}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <p className="hint-text text-[9px] text-white/20 mt-2 ml-1 italic">{newReminderDays.length === 0 ? 'Reminding daily' : `Reminding ${newReminderDays.length} day(s) a week`}</p>
-                      </div>
-                    </motion.div>
-                  )}
+              {/* Logistics */}
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg backdrop-blur-md mb-8">
+                <div className="flex items-center justify-between pb-1">
+                  <h3 className="text-[10px] font-black uppercase tracking-[2px] text-white/50 pl-1 flex items-center gap-2 m-0">
+                    <Timer size={12} /> Reminder
+                  </h3>
+                  <ToggleSwitch 
+                    checked={newReminderActive} 
+                    onChange={(e) => setNewReminderActive(e.target.checked)} 
+                    themeColor={(THEMES[settings.theme] || THEMES.VOID).primary} 
+                  />
                 </div>
+
+                {newReminderActive && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="pt-4 space-y-4"
+                  >
+                    <div>
+                       <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Time</h4>
+                       <input 
+                         type="time" 
+                         value={newReminderTime}
+                         onChange={(e) => setNewReminderTime(e.target.value)}
+                         className="w-full bg-black/40 border border-white/10 px-4 py-2.5 rounded-xl text-[14px] font-bold text-white focus:outline-none focus:border-white/30 transition-all cursor-pointer"
+                       />
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Days</h4>
+                      <div className="flex justify-between gap-1">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => {
+                          const isSelected = newReminderDays.includes(i);
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                if (isSelected) setNewReminderDays(newReminderDays.filter(d => d !== i));
+                                else setNewReminderDays([...newReminderDays, i]);
+                              }}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all border ${
+                                isSelected ? 'bg-blue-500 border-blue-400 text-white shadow-md' : 'bg-black/40 border-white/10 text-white/40'
+                              }`}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="hint-text text-[9px] text-white/30 mt-2 ml-1 italic">{newReminderDays.length === 0 ? 'Reminding daily' : `Reminding ${newReminderDays.length} day(s) a week`}</p>
+                    </div>
+                  </motion.div>
+                )}
               </section>
 
+              <button
+                onClick={addHabit}
+                disabled={!newName.trim()}
+                className="w-full py-4 rounded-xl text-[14px] font-black uppercase tracking-[0.15em] transition-all active:scale-[0.98] disabled:opacity-30 disabled:scale-100 flex items-center justify-center gap-2 shadow-xl"
+                style={{ 
+                  backgroundColor: (THEMES[settings.theme] || THEMES.VOID).primary,
+                  color: '#ffffff'
+                }}
+              >
+                CREATE QUEST
+              </button>
+
+              <div className="h-12" /> {/* Bottom Padding */}
             </div>
           </motion.div>
         )}
@@ -2019,7 +2066,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="p-6 border rounded-2xl w-full max-w-sm shadow-2xl backdrop-blur-xl"
+              className="p-6 rounded-2xl w-full max-w-sm glass-panel"
               style={getGlassStyle()}
               onClick={e => e.stopPropagation()}
             >
@@ -2113,37 +2160,37 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 if (!selectedHabit || !selectedHabitStats) return null;
                 const habitColor = selectedHabit.color;
                 const IconComponent = ICON_MAP[selectedHabit.icon] || Wind;
-                const { cells, totalDone, streak, bestStreak, heatmapWeeks, weeklyData, chartData } = selectedHabitStats;
+                const { cells, totalDone, streak, bestStreak, heatmapWeeks, weeklyData, chartData, overallCompletionRate } = selectedHabitStats;
 
                 return (
                   <>
-                    <div className="p-5 sm:p-6 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
+                    <div className="p-4 rounded-2xl glass-panel space-y-4 shadow-lg backdrop-blur-md" style={{...getGlassStyle(), backgroundColor: 'rgba(255,255,255,0.05)'}}>
                       {isEditingDetails ? (
                         <div className="space-y-6">
-                          <div className="space-y-4">
+                          <div className="space-y-3">
                              <div>
-                               <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-1.5 uppercase tracking-[1.5px]">Ritual Title</h4>
+                               <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Ritual Title</h4>
                                <input 
                                  type="text" 
                                  value={editName}
                                  onChange={(e) => setEditName(e.target.value)}
-                                 className="w-full bg-white/[0.08] border-2 border-white/20 px-4 py-3 rounded-[18px] text-[15px] font-medium text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                                 className="w-full bg-black/40 border border-white/10 px-4 py-3 rounded-xl text-[15px] font-bold text-white focus:outline-none focus:border-white/30 transition-all"
                                />
                              </div>
                              <div>
-                               <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-1.5 uppercase tracking-[1.5px]">Ritual Intent</h4>
+                               <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Ritual Intent</h4>
                                <input 
                                  type="text" 
                                  value={editIntent}
                                  onChange={(e) => setEditIntent(e.target.value)}
                                  placeholder="Why does this matter?"
-                                 className="w-full bg-white/[0.08] border-2 border-white/20 px-4 py-3 rounded-[18px] text-[14px] font-medium text-white focus:outline-none focus:border-emerald-500/50 transition-all italic"
+                                 className="w-full bg-black/40 border border-white/10 px-4 py-3 rounded-xl text-[14px] font-medium text-white focus:outline-none focus:border-white/30 transition-all italic"
                                />
                              </div>
                           </div>
 
                           <div>
-                            <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-2 uppercase tracking-[1.5px]">Path Category</h4>
+                            <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Path Category</h4>
                             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
                               {HABIT_CATEGORIES.map(cat => {
                                 const isSelected = editCategory === cat;
@@ -2153,8 +2200,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                     onClick={() => setEditCategory(cat)}
                                     className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
                                       isSelected 
-                                        ? 'bg-white/20 text-white border-white/20 shadow-lg' 
-                                        : 'bg-white/5 text-white/40 border-transparent hover:bg-white/10 hover:text-white/60'
+                                        ? 'bg-white/20 text-white border-white/20 shadow-md' 
+                                        : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
                                     }`}
                                   >
                                     {cat}
@@ -2166,14 +2213,14 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
                           {folders.length > 0 && (
                             <div>
-                              <h4 className="section-label text-[11px] font-bold text-white/60 ml-2 mb-2 uppercase tracking-[1.5px]">Assigned Folder</h4>
+                              <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Assigned Folder</h4>
                               <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
                                 <button
                                   onClick={() => setEditFolderId(null)}
                                   className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
                                     editFolderId === null 
-                                      ? 'bg-white/20 text-white border-white/20 shadow-lg' 
-                                      : 'bg-white/5 text-white/40 border-transparent hover:bg-white/10 hover:text-white/60'
+                                      ? 'bg-white/20 text-white border-white/20 shadow-md' 
+                                      : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
                                   }`}
                                 >
                                   None
@@ -2186,8 +2233,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                       onClick={() => setEditFolderId(folder.id)}
                                       className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border flex items-center gap-1.5 ${
                                         isSelected 
-                                          ? 'bg-white/20 text-white border-white/20 shadow-lg' 
-                                          : 'bg-white/5 text-white/40 border-transparent hover:bg-white/10 hover:text-white/60'
+                                          ? 'bg-white/20 text-white border-white/20 shadow-md' 
+                                          : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
                                       }`}
                                     >
                                       <Folder size={10} />
@@ -2200,25 +2247,28 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           )}
 
                           <div>
-                            <h4 className="text-[11px] font-bold text-white/60 ml-2 mb-3 uppercase tracking-[1.5px]">Visual Essence</h4>
-                            <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 snap-x no-scrollbar">
+                            <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Visual Essence</h4>
+                            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-2 snap-x no-scrollbar text-white">
                               {ACCENT_COLORS.map(color => (
-                                <button
-                                  key={color}
-                                  onClick={() => setEditColor(color)}
-                                  className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center transition-all ${
-                                    editColor === color ? 'scale-110 ring-2 ring-white/40' : 'opacity-60'
-                                  }`}
-                                  style={{ backgroundColor: color }}
-                                >
-                                  {editColor === color && <Check size={12} className="text-white" strokeWidth={4} />}
-                                </button>
+                                <div key={color} className="shrink-0 snap-center p-1.5">
+                                  <button
+                                    key={color}
+                                    onClick={() => setEditColor(color)}
+                                    className={`w-5 h-5 rounded-full shrink-0 transition-all duration-300 flex items-center justify-center ${
+                                      editColor === color 
+                                        ? 'scale-110 ring-2 ring-white ring-offset-2 ring-offset-black shadow-lg shadow-black/50' 
+                                        : 'opacity-40 hover:opacity-100 scale-100'
+                                    }`}
+                                    style={{ backgroundColor: color }}
+                                    aria-label={`Select color ${color}`}
+                                  />
+                                </div>
                               ))}
                             </div>
                           </div>
 
                           <div>
-                            <h4 className="text-[11px] font-bold text-white/60 ml-2 mb-3 uppercase tracking-[1.5px]">Ritual Icon</h4>
+                            <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Ritual Icon</h4>
                             <div className="grid grid-cols-6 gap-2">
                               {(Object.keys(ICON_MAP) as Array<keyof typeof ICON_MAP>).map(iconKey => {
                                 const Icon = ICON_MAP[iconKey];
@@ -2228,18 +2278,25 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                     key={iconKey}
                                     onClick={() => setEditIcon(iconKey)}
                                     className={`aspect-square rounded-xl flex items-center justify-center transition-all border ${
-                                      isSelected ? 'border-white/40 bg-white/10' : 'border-transparent bg-white/5 opacity-40 hover:opacity-100'
+                                      isSelected ? 'border-white/40 bg-white/10 shadow-md' : 'border-transparent bg-black/20 opacity-40 hover:opacity-100'
                                     }`}
                                     style={{ color: isSelected ? editColor : '#ffffff' }}
                                   >
-                                    <Icon size={18} />
+                                    <Icon size={16} />
                                   </button>
                                 );
                               })}
                             </div>
                           </div>
 
-                          <div className="pt-4 border-t border-white/5">
+                          <div className="pt-4 border-t border-white/5 space-y-2">
+                             <button
+                               onClick={saveHabitEdit}
+                               className="w-full py-3 rounded-xl text-[14px] font-black uppercase tracking-[0.15em] transition-all active:scale-[0.98] shadow-xl"
+                               style={{ backgroundColor: editColor, color: '#ffffff' }}
+                             >
+                               SAVE CHANGES
+                             </button>
                              <button
                                onClick={() => setHabitToDelete(selectedHabit)}
                                className="w-full py-3 rounded-xl bg-red-500/10 text-red-500 text-[11px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all border border-red-500/20"
@@ -2272,42 +2329,9 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                       )}
                     </div>
 
-                    <DetailStats totalDone={totalDone} streak={streak} bestStreak={bestStreak} />
+                    <DetailStats totalDone={totalDone} streak={streak} bestStreak={bestStreak} completionRate={overallCompletionRate} />
 
                     <VoyageMap heatmapWeeks={heatmapWeeks} habitColor={habitColor} />
-
-                    <WeeklyCompletionChart weeklyData={weeklyData} habitColor={habitColor} />
-
-                    <div className="p-5 sm:p-6 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
-                        <div className="flex items-center justify-between mb-6">
-                            <h4 className="text-[17px] font-bold uppercase tracking-tight">Streak History</h4>
-                            <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
-                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Growth Curve</span>
-                            </div>
-                        </div>
-                        <div className="h-40 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={(() => {
-                                    const historicalStreaks = getStreakHistory(selectedHabit);
-                                    // Take last 8 streaks for visualization
-                                    const latest = historicalStreaks.slice(-8);
-                                    return latest.map((s, i) => ({ name: `S${i+1}`, length: s }));
-                                })()}>
-                                    <XAxis dataKey="name" hide />
-                                    <Tooltip 
-                                        contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                                        labelStyle={{ display: 'none' }}
-                                    />
-                                    <Bar dataKey="length" radius={[6, 6, 0, 0]}>
-                                        {(() => getStreakHistory(selectedHabit).slice(-8))().map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={index === getStreakHistory(selectedHabit).slice(-8).length - 1 ? habitColor : `${habitColor}40`} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <p className="text-[10px] text-white/30 text-center mt-4">Showing historical completion spurts</p>
-                    </div>
 
                     {/* Reminder Settings */}
                     <div className="p-5 glass-panel rounded-2xl">
@@ -2316,22 +2340,18 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           <Timer size={20} className={selectedHabit.reminder?.active ? 'text-blue-400' : 'text-white/30'} />
                           <h4 className="text-lg font-bold">Logistics</h4>
                         </div>
-                        <button
-                          onClick={async () => {
-                            const newActive = !selectedHabit.reminder?.active;
+                        <ToggleSwitch 
+                          checked={!!selectedHabit.reminder?.active} 
+                          onChange={async (e) => {
+                            const newActive = e.target.checked;
                             if (newActive) await requestNotificationPermission();
                             setHabits(prev => prev.map(h => h.id === selectedHabit.id ? {
                               ...h,
                               reminder: { ...(h.reminder || { time: '09:00' }), active: newActive }
                             } : h));
-                          }}
-                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${selectedHabit.reminder?.active ? 'bg-blue-500' : 'bg-white/10'}`}
-                        >
-                          <motion.span
-                            className="inline-block h-5 w-5 transform rounded-full bg-white shadow"
-                            animate={{ x: selectedHabit.reminder?.active ? 20 : 0 }}
-                          />
-                        </button>
+                          }} 
+                          themeColor={(THEMES[settings.theme] || THEMES.VOID).primary} 
+                        />
                       </div>
                       
                       {selectedHabit.reminder?.active && (
@@ -2386,11 +2406,11 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                       )}
                     </div>
 
-                    <div className="p-5 sm:p-6 border rounded-2xl shadow-xl backdrop-blur-md border-theme-border bg-theme-card">
+                    <div className="p-5 sm:p-6 rounded-2xl glass-panel" style={getGlassStyle()}>
                       <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-[17px] font-medium leading-tight">Progress Visualization</h4>
-                        <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
-                          <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Completion Density</span>
+                        <h4 className="text-[17px] font-bold text-white tracking-tight uppercase">Progress Visualization</h4>
+                        <div className="px-2 py-1 bg-white/10 rounded-lg border border-white/20">
+                          <span className="text-[10px] font-bold text-white uppercase tracking-wider">Completion Density</span>
                         </div>
                       </div>
                       
@@ -2454,7 +2474,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             </Bar>
                             <XAxis 
                                 dataKey="name" 
-                                hide={true}
+                                stroke="rgba(255,255,255,0.3)"
+                                fontSize={9}
+                                tickLine={false}
+                                axisLine={false}
                             />
                             <Tooltip 
                                 cursor={{fill: 'rgba(255,255,255,0.05)'}}
