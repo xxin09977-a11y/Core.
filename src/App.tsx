@@ -75,6 +75,7 @@ interface Habit {
   color: string;
   history: HabitStatus[]; // Legacy
   logs?: Record<string, HabitStatus>; // YYYY-MM-DD -> status
+  tags?: string[];
   bestStreak?: number;
   reminder?: {
     time: string; // HH:mm format
@@ -92,7 +93,7 @@ interface Folder {
 
 const getTodayStr = () => new Date().toISOString().split('T')[0];
 
-const getWeekDays = Array.from({ length: 6 }, (_, i) => {
+const getRollingWindowDates = (length: number) => Array.from({ length }, (_, i) => {
   const d = new Date();
   d.setDate(d.getDate() - i);
   return d.toISOString().split('T')[0];
@@ -269,32 +270,14 @@ const INITIAL_HABITS: Habit[] = [
   }
 ];
 
-// Watermark Background Component
-const WatermarkBackground = ({ pureBlack, theme }: { pureBlack?: boolean; theme: string }) => {
-  const themeObj = THEMES[theme] || THEMES.VOID;
+// Watermark Background Component - Optimized
+const WatermarkBackground = ({ pureBlack }: { pureBlack?: boolean }) => {
   return (
-    <div className={`fixed inset-0 overflow-hidden pointer-events-none z-[-1] ${pureBlack ? 'bg-black' : 'bg-[#050510]'}`}>
+    <div className={`fixed inset-0 pointer-events-none z-[-1] transition-colors duration-500 ${pureBlack ? 'bg-black' : 'bg-[#0f0f14]'}`}>
       {!pureBlack && (
-        <>
-          <div 
-            className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[140px] opacity-[0.35]"
-            style={{ background: themeObj.primary }}
-          />
-          <div 
-            className="absolute top-[30%] -right-[15%] w-[50%] h-[70%] rounded-full blur-[160px] opacity-[0.25]"
-            style={{ background: themeObj.secondary }}
-          />
-          <div 
-            className="absolute -bottom-[20%] left-[10%] w-[60%] h-[50%] rounded-full blur-[150px] opacity-[0.15]"
-            style={{ background: themeObj.primary }}
-          />
-          
-          {/* Subtle noise texture overlay */}
-          <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay pointer-events-none"
-               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
-          />
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHBhdGggZD0iTTAgMGg0MHY0MEgweiIgZmlsbD0ibm9uZSIvPPHBhdGggZD0iTTAgMGg0MHY0MEgwem00MCAwaC0xdjQwaDFWMHptMCA0MGgtNDB2LTFoNDB2MXoiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMSkiLz48L3N2Zz4=')] opacity-50 pointer-events-none" />
-        </>
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
+        />
       )}
     </div>
   );
@@ -308,7 +291,11 @@ const MemoizedHabitCard = React.memo(({
   onLongPress, 
   onLongPressCancel,
   isQuickActionsOpen,
-  theme
+  theme,
+  weekDays,
+  isSelectionMode,
+  isSelected,
+  onToggleSelection
 }: { 
   habit: Habit; 
   idx: number; 
@@ -318,47 +305,62 @@ const MemoizedHabitCard = React.memo(({
   onLongPressCancel: () => void;
   isQuickActionsOpen: boolean;
   theme: string;
+  weekDays: string[];
+  isSelectionMode: boolean;
+  isSelected: boolean;
+  onToggleSelection: (id: string) => void;
 }) => {
   const IconComponent = ICON_MAP[habit.icon] || Wind;
   const habitColor = habit.color;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(idx * 0.05, 0.5) }}
-      className="relative rounded-[16px] mb-2 group cursor-pointer flex glass-panel habit-card overflow-hidden"
-      style={{ 
-        '--extra-shadow': `inset 3px 0 0 ${habitColor}, -2px 0 12px ${habitColor}33`
-      } as React.CSSProperties}
-      onPointerDown={(e) => onLongPress(e, habit)}
-      onPointerUp={onLongPressCancel}
-      onPointerLeave={onLongPressCancel}
-      onContextMenu={(e) => e.preventDefault()}
+    <div
       onClick={() => {
-        if (!isQuickActionsOpen) {
+        if (isSelectionMode) {
+          onToggleSelection(habit.id);
+        } else if (!isQuickActionsOpen) {
           onEdit();
         }
       }}
+      className={`relative rounded-[16px] mb-3 flex bg-[#1e1e2e] border border-[#2a2a45] overflow-hidden transition-transform active:scale-[0.98] ${isSelected ? 'ring-2 ring-amber-500/50' : ''}`}
+      onPointerDown={(e) => !isSelectionMode && onLongPress(e, habit)}
+      onPointerUp={onLongPressCancel}
+      onPointerLeave={onLongPressCancel}
+      onContextMenu={(e) => e.preventDefault()}
     >
-      <div className="flex flex-col flex-1 py-[10px] pr-[12px] pl-[10px]">
+      {isSelectionMode && (
+        <div className="absolute top-2 left-2 z-30">
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-amber-500 border-amber-500' : 'border-white/20 bg-black/20'}`}>
+            {isSelected && <Check size={12} strokeWidth={4} className="text-white" />}
+          </div>
+        </div>
+      )}
+      <div className={`flex flex-col flex-1 py-[10px] pr-[12px] pl-[10px] ${isSelectionMode ? 'pl-[36px]' : ''}`}>
         <div className="flex items-center gap-2 mb-2">
           <div 
-            className="w-[28px] h-[28px] rounded-lg flex items-center justify-center shrink-0" 
-            style={{ backgroundColor: `${habitColor}26`, color: habitColor }}
+            className="w-[28px] h-[28px] rounded-lg flex items-center justify-center shrink-0 bg-[#252540]" 
+            style={{ color: habitColor }}
           >
             <IconComponent size={14} strokeWidth={2.5} />
           </div>
-          <h3 className="text-[13px] font-semibold text-white flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
-            {habit.name}
-          </h3>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-col flex-1 overflow-hidden mr-2">
+            <h3 className="text-[14px] font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis tracking-tight leading-tight">
+              {habit.name}
+            </h3>
+            {habit.tags && habit.tags.length > 0 && (
+              <div className="flex items-center gap-1 mt-0.5 overflow-x-auto no-scrollbar pb-0.5">
+                {habit.tags.map(tag => (
+                  <span key={tag} className="text-[9px] font-bold px-1.5 py-[1px] rounded bg-white/10 text-white/60 tracking-wide uppercase shrink-0">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
             <div 
-              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1"
-              style={{ 
-                color: (THEMES[theme] || THEMES.VOID).secondary,
-                backgroundColor: `${(THEMES[theme] || THEMES.VOID).secondary}1f`
-              }}
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 bg-[#1a1a30]"
+              style={{ color: (THEMES[theme] || THEMES.VOID).secondary }}
             >
               <Flame size={10} />
               <span>{calculateStreak(habit)}</span>
@@ -367,7 +369,7 @@ const MemoizedHabitCard = React.memo(({
         </div>
 
         <div className="flex justify-between gap-1 px-0.5 pb-0.5">
-          {getWeekDays.map((dateStr) => {
+          {weekDays.map((dateStr) => {
             const status = habit.logs?.[dateStr] || 'empty';
             const isToday = dateStr === getTodayStr();
             const dayName = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'narrow' });
@@ -376,41 +378,17 @@ const MemoizedHabitCard = React.memo(({
             const isSkip = status === 'skip';
 
             let dayCircleStyle: React.CSSProperties = {
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.4)'
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.5)'
             };
-            let dayContent: React.ReactNode = (
-              <div className="relative flex items-center justify-center w-full h-full overflow-hidden">
-                <span className={`absolute top-0.5 right-1 text-[9px] font-black leading-none transition-opacity pointer-events-none z-10 drop-shadow-md ${isDone || isSkip ? 'text-white/50' : 'text-white'}`}>
-                  {dateNum}
-                </span>
-                {isDone && <Check size={14} strokeWidth={4} className="text-white drop-shadow-sm" />}
-                {isSkip && <Minus size={14} strokeWidth={4} className="text-red-400 drop-shadow-sm" />}
-                {isToday && !isDone && !isSkip && (
-                  <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: habitColor }} />
-                )}
-              </div>
-            );
-
+            
             if (isDone) {
-              dayCircleStyle = {
-                background: habitColor,
-                border: 'none',
-                color: 'white',
-              };
+              dayCircleStyle = { background: habitColor, border: 'none', color: 'white' };
             } else if (isSkip) {
-              dayCircleStyle = {
-                background: 'rgba(248,113,113,0.15)',
-                border: '1px solid rgba(248,113,113,0.3)',
-                color: '#f87171'
-              };
+              dayCircleStyle = { background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)', color: '#f87171' };
             } else if (isToday) {
-              dayCircleStyle = {
-                background: 'rgba(108,99,255,0.12)',
-                border: '1.5px solid #6c63ff',
-                color: 'rgba(255,255,255,0.6)'
-              };
+              dayCircleStyle = { background: 'rgba(108,99,255,0.12)', border: '1.5px solid #6c63ff', color: 'rgba(255,255,255,0.6)' };
             }
 
             return (
@@ -420,47 +398,56 @@ const MemoizedHabitCard = React.memo(({
                   e.stopPropagation();
                   onToggle(habit.id, dateStr, e);
                 }}
-                className={`flex-1 flex flex-col items-center gap-[4px] p-[6px_2px] rounded-xl min-w-0 transition-all group ${isToday ? 'bg-white/5' : ''}`}
+                className={`flex-1 flex flex-col items-center gap-[4px] p-[6px_2px] rounded-xl transition-colors active:scale-90 ${isToday ? 'bg-white/5' : ''}`}
               >
-                <span className={`text-[8px] font-black uppercase tracking-tighter leading-none transition-colors ${isToday ? 'text-white' : 'text-white/20 group-hover:text-white/40'}`}>
+                <span className={`text-[8px] font-black uppercase tracking-tighter leading-none ${isToday ? 'text-white' : 'text-white/20'}`}>
                   {dayName}
                 </span>
                 <div
-                  className="w-[28px] h-[28px] rounded-lg flex items-center justify-center text-[10px] font-bold transition-all duration-200 shadow-sm"
+                  className={`w-[28px] h-[28px] rounded-lg flex items-center justify-center text-[10px] font-bold`}
                   style={dayCircleStyle}
                 >
-                  {dayContent}
+                  <div className="relative flex items-center justify-center w-full h-full">
+                    <span className={`absolute top-0.5 right-[1.5px] text-[8px] font-black leading-none ${isDone || isSkip ? 'text-white/70' : 'text-white/40'}`}>
+                      {dateNum}
+                    </span>
+                    {isDone && <Check size={15} strokeWidth={4} className="text-white z-10" />}
+                    {isSkip && <Minus size={15} strokeWidth={4} className="text-red-400 z-10" />}
+                    {isToday && !isDone && !isSkip && (
+                      <div className="w-1.5 h-1.5 rounded-full shadow-sm" style={{ backgroundColor: habitColor }} />
+                    )}
+                  </div>
                 </div>
               </button>
             );
           })}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
 
 const DetailStats = React.memo(({ totalDone, streak, bestStreak, completionRate }: { totalDone: number; streak: number; bestStreak: number; completionRate: number }) => (
   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div className="p-4 rounded-2xl glass-panel flex flex-col justify-between">
+    <div className="p-4 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45] flex flex-col justify-between">
       <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
         <Check size={12} className="text-emerald-400" /> Total Logs
       </div>
       <div className="text-[26px] font-black text-emerald-400">{totalDone}</div>
     </div>
-    <div className="p-4 rounded-2xl glass-panel flex flex-col justify-between">
+    <div className="p-4 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45] flex flex-col justify-between">
       <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
         <Activity size={12} className="text-blue-400" /> Rate
       </div>
       <div className="text-[26px] font-black text-blue-400">{completionRate}%</div>
     </div>
-    <div className="p-4 rounded-2xl glass-panel flex flex-col justify-between">
+    <div className="p-4 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45] flex flex-col justify-between">
       <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
         <Flame size={12} className="text-orange-500" /> Cur Streak
       </div>
       <div className="text-[26px] font-black text-white">{streak}</div>
     </div>
-    <div className="p-4 rounded-2xl glass-panel flex flex-col justify-between">
+    <div className="p-4 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45] flex flex-col justify-between">
       <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
         <Star size={12} className="text-yellow-500" /> Max Streak
       </div>
@@ -470,7 +457,7 @@ const DetailStats = React.memo(({ totalDone, streak, bestStreak, completionRate 
 ));
 
 const VoyageMap = React.memo(({ heatmapWeeks, habitColor }: { heatmapWeeks: any[][]; habitColor: string }) => (
-  <div className="p-5 sm:p-6 rounded-2xl glass-panel">
+  <div className="p-5 sm:p-6 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45]">
       <div className="flex items-center justify-between mb-4">
           <h4 className="text-[17px] font-bold uppercase tracking-tight">90-Day Voyage Map</h4>
           <div className="flex items-center gap-2">
@@ -485,7 +472,7 @@ const VoyageMap = React.memo(({ heatmapWeeks, habitColor }: { heatmapWeeks: any[
           </div>
       </div>
       
-      <div className="flex gap-1 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-1 overflow-x-auto pb-2 no-scrollbar">
           <div className="flex flex-col gap-1 pr-2 pt-5">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
                   <span key={i} className="text-[8px] font-black text-white/20 h-2.5 flex items-center">{day}</span>
@@ -505,7 +492,7 @@ const VoyageMap = React.memo(({ heatmapWeeks, habitColor }: { heatmapWeeks: any[
                       return (
                           <div 
                               key={day.dateStr}
-                              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm transition-all duration-300 ${
+                              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm ${
                                   day.isFuture ? 'opacity-0' : ''
                               }`}
                               style={{ 
@@ -523,7 +510,7 @@ const VoyageMap = React.memo(({ heatmapWeeks, habitColor }: { heatmapWeeks: any[
 ));
 
 const WeeklyCompletionChart = React.memo(({ weeklyData, habitColor }: { weeklyData: any[]; habitColor: string }) => (
-  <div className="p-5 sm:p-6 rounded-2xl glass-panel">
+  <div className="p-5 sm:p-6 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45]">
     <div className="flex items-center justify-between mb-6">
         <h4 className="text-[17px] font-bold uppercase tracking-tight">6-Week Completion</h4>
         <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
@@ -571,7 +558,7 @@ const CalendarCellGrid = React.memo(({ cells, habitColor, onToggle }: {
   habitColor: string; 
   onToggle: (date: string, e: any) => void;
 }) => (
-  <div className="p-5 sm:p-6 rounded-2xl glass-panel">
+  <div className="p-5 sm:p-6 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45]">
     <h4 className="text-[17px] font-medium leading-tight mb-5">Past 6 Weeks</h4>
     <div className="grid grid-cols-7 gap-2 mb-3">
       {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
@@ -587,24 +574,18 @@ const CalendarCellGrid = React.memo(({ cells, habitColor, onToggle }: {
         const isSkip = cell.status === 'skip';
         
         return (
-          <motion.button
+          <button
             key={cell.id}
-            whileTap={{ scale: 0.8 }}
             onClick={(e) => onToggle(cell.dateStr!, e)}
-            className={`aspect-square rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-200 border ${
-              isDone 
-                ? 'shadow-[0_0_15px_rgba(45,212,191,0.15)]' 
-                : 'border-white/10 bg-transparent'
-            }`}
+            className="aspect-square rounded-lg sm:rounded-xl flex items-center justify-center border active:scale-90 transition-transform"
             style={{ 
               backgroundColor: isDone ? habitColor : isSkip ? 'rgba(255,255,255,0.05)' : 'transparent',
               borderColor: isDone ? habitColor : isSkip ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.1)',
-              boxShadow: isDone ? `0 0 15px ${habitColor}30` : undefined,
             }}
           >
-            {isDone && <Check className="text-black stroke-[3px] w-4 h-4 sm:w-5 sm:h-5" />}
-            {isSkip && <Minus className="text-white/40 stroke-[3px] w-4 h-4 sm:w-5 sm:h-5" />}
-          </motion.button>
+            {isDone && <Check size={16} strokeWidth={4} className="text-white" />}
+            {isSkip && <Minus size={16} strokeWidth={4} className="text-white/40" />}
+          </button>
         );
       })}
     </div>
@@ -681,28 +662,56 @@ export default function App() {
 
   const [settings, setSettings] = useState<{
     pureBlack: boolean;
-    glassBlur: number;
-    glassIntensity: number;
     theme: keyof typeof THEMES;
     remindersEnabled: boolean;
+    reminderTone: string;
+    startedAt: string;
+    rollingWindowDays: number;
+    hasSeenTutorial?: boolean;
+    glassIntensity: number;
+    glassBlur: number;
   }>(() => {
     const defaultSettings = {
       pureBlack: false,
-      glassBlur: 20,
-      glassIntensity: 7,
       theme: 'VOID' as const,
-      remindersEnabled: true
+      remindersEnabled: true,
+      reminderTone: 'chime',
+      startedAt: new Date().toISOString(),
+      rollingWindowDays: 6,
+      hasSeenTutorial: false,
+      glassIntensity: 5,
+      glassBlur: 10,
     };
     if (typeof window === 'undefined') return defaultSettings;
     const saved = localStorage.getItem('core_settings');
     if (!saved) return defaultSettings;
     try {
-      return { ...defaultSettings, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      if (!parsed.startedAt) {
+        parsed.startedAt = new Date().toISOString();
+      }
+      if (parsed.rollingWindowDays === undefined) {
+        parsed.rollingWindowDays = 6;
+      }
+      if (parsed.hasSeenTutorial === undefined) {
+        parsed.hasSeenTutorial = false;
+      }
+      return { ...defaultSettings, ...parsed };
     } catch (e) {
       return defaultSettings;
     }
   });
+
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+  const TUTORIAL_STEPS = [
+    { title: "Welcome to Grand Line", text: "Create quests to track your daily progress and embark on a new journey.", icon: Anchor },
+    { title: "Sailing Forward", text: "Long-press a quest to see quick actions, or tap it repeatedly to cycle through its status.", icon: Compass },
+    { title: "Manage the Voyage", text: "Group your quests into paths, view your stats, and build streaks to stay on course.", icon: Map },
+    { title: "Ready?", text: "Let's set sail and begin your grand adventure.", icon: Ship }
+  ];
+
   const [showSettings, setShowSettings] = useState(false);
+  const rollingWeekDays = useMemo(() => getRollingWindowDates(settings.rollingWindowDays), [settings.rollingWindowDays]);
 
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const touchStartY = useRef<number>(0);
@@ -714,6 +723,8 @@ export default function App() {
   const [newFolderId, setNewFolderId] = useState<string | null>(null);
   const [newColor, setNewColor] = useState(ACCENT_COLORS[0]);
   const [newIcon, setNewIcon] = useState<keyof typeof ICON_MAP>('JollyRoger');
+  const [newTags, setNewTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState('');
   const [newReminderTime, setNewReminderTime] = useState('09:00');
   const [newReminderActive, setNewReminderActive] = useState(false);
   const [newReminderDays, setNewReminderDays] = useState<number[]>([]);
@@ -724,22 +735,25 @@ export default function App() {
   const [editFolderId, setEditFolderId] = useState<string | null>(null);
   const [editColor, setEditColor] = useState('');
   const [editIcon, setEditIcon] = useState<keyof typeof ICON_MAP>('JollyRoger');
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [editTagInput, setEditTagInput] = useState('');
   const [editReminderActive, setEditReminderActive] = useState(false);
   const [editReminderTime, setEditReminderTime] = useState('09:00');
   const [editReminderDays, setEditReminderDays] = useState<number[]>([]);
 
   const [activeInput, setActiveInput] = useState<string | null>(null);
 
-  const [filterCategory, setFilterCategory] = useState<string | 'All'>('All');
-  const [newFolderName, setNewFolderName] = useState('');
-  const [sortBy, setSortBy] = useState<'Manual' | 'Streak' | 'Progress'>('Manual');
-
-  const baseFilteredHabits = useMemo(() => {
-    return (habits || []).filter(h => filterCategory === 'All' || h.category === filterCategory);
-  }, [habits, filterCategory]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<'Name' | 'Streak' | 'Progress'>('Name');
+  const [showBulkActionModal, setShowBulkActionModal] = useState(false);
+  const [bulkActionType, setBulkActionType] = useState<'status' | 'folder' | 'category' | 'delete'>('status');
+  const [bulkTargetStatus, setBulkTargetStatus] = useState<HabitStatus>('done');
+  const [bulkTargetFolderId, setBulkTargetFolderId] = useState<string | null>(null);
+  const [bulkTargetCategory, setBulkTargetCategory] = useState(HABIT_CATEGORIES[0]);
 
   const sortedHabits = useMemo(() => {
-    let sorted = [...baseFilteredHabits];
+    let sorted = [...(habits || [])];
     if (sortBy === 'Streak') {
       sorted.sort((a, b) => calculateStreak(b) - calculateStreak(a));
     } else if (sortBy === 'Progress') {
@@ -750,20 +764,21 @@ export default function App() {
       });
     }
     return sorted;
-  }, [baseFilteredHabits, sortBy]);
+  }, [habits, sortBy]);
 
   const groupedHabits = useMemo(() => {
     const habitsByFolder: Record<string, Habit[]> = {};
     const unassignedHabits: Habit[] = [];
+    const folderExists = new Set(folders.map(f => f.id));
 
-    sortedHabits.forEach(h => {
-      if (h.folderId && folders.find(f => f.id === h.folderId)) {
+    for (const h of sortedHabits) {
+      if (h.folderId && folderExists.has(h.folderId)) {
         if (!habitsByFolder[h.folderId]) habitsByFolder[h.folderId] = [];
         habitsByFolder[h.folderId].push(h);
       } else {
         unassignedHabits.push(h);
       }
-    });
+    }
     return { habitsByFolder, unassignedHabits };
   }, [sortedHabits, folders]);
 
@@ -879,16 +894,11 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('core_settings', JSON.stringify(settings));
-    
-    // Apply styling system to document
     document.documentElement.setAttribute('data-theme', settings.theme);
-    document.documentElement.style.setProperty('--glass-intensity', (settings.glassIntensity / 10).toString());
-    
-    // Fallback for direct body classes or properties if any
     if (settings.pureBlack) {
-      document.body.style.backgroundColor = 'var(--tw-color-black)';
+      document.body.style.backgroundColor = '#000000';
     } else {
-      document.body.style.backgroundColor = 'var(--theme-bg)';
+      document.body.style.backgroundColor = '#0f0f14';
     }
   }, [settings]);
 
@@ -901,6 +911,8 @@ export default function App() {
       setEditFolderId(selectedHabit.folderId || null);
       setEditColor(selectedHabit.color);
       setEditIcon(selectedHabit.icon);
+      setEditTags(selectedHabit.tags || []);
+      setEditTagInput('');
       setEditReminderActive(selectedHabit.reminder?.active ?? false);
       setEditReminderTime(selectedHabit.reminder?.time ?? '09:00');
       setEditReminderDays(selectedHabit.reminder?.days ?? []);
@@ -955,10 +967,15 @@ export default function App() {
     reader.readAsText(file);
   };
 
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
   // Reminder Monitor
   useEffect(() => {
     const checkReminders = () => {
-      if (!settings.remindersEnabled) return;
+      if (!settingsRef.current.remindersEnabled) return;
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
       const today = now.toISOString().split('T')[0];
@@ -976,6 +993,10 @@ export default function App() {
                 body: habit.intent || "Time to set sail on your daily quest!",
                 icon: "/favicon.ico" // Might not work in AI Studio preview but good practice
               });
+              
+              const storedTone = settingsRef.current.reminderTone || 'chime';
+              playSound(storedTone);
+
               changed = true;
               return {
                 ...habit,
@@ -1015,7 +1036,16 @@ const getAudioContext = () => {
   return audioCtx;
 };
 
-const playSound = (type: 'kaching' | 'bell') => {
+const NOTIFICATION_TONES = [
+  { id: 'kaching', label: 'Ka-Ching' },
+  { id: 'bell', label: 'Crystal Bell' },
+  { id: 'chime', label: 'Magic Chime' },
+  { id: 'harp', label: 'Harp Arpeggio' },
+  { id: 'bowl', label: 'Tibetan Bowl' },
+  { id: 'marimba', label: 'Marimba Bounce' }
+] as const;
+
+const playSound = (type: string) => {
   const ctx = getAudioContext();
   if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume();
@@ -1069,6 +1099,72 @@ const playSound = (type: 'kaching' | 'bell') => {
     osc2.start(t);
     osc1.stop(t + 1.5);
     osc2.stop(t + 1.5);
+  } else if (type === 'chime') {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1046.50, t); // C6
+    osc.frequency.setValueAtTime(1318.51, t + 0.1); // E6
+    osc.frequency.setValueAtTime(1567.98, t + 0.2); // G6
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.2, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 1.0);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 1.0);
+  } else if (type === 'harp') {
+    const root = 523.25; // C5
+    [0, 4, 7, 12].forEach((interval, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = root * Math.pow(2, interval / 12);
+      
+      const startTime = t + i * 0.08;
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 1.5);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + 1.5);
+    });
+  } else if (type === 'bowl') {
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    const gain2 = ctx.createGain();
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.value = 261.63; // C4
+    osc2.frequency.value = 264.63; // Slight beating for that vibrating bowl sound
+    gain1.gain.setValueAtTime(0, t);
+    gain1.gain.linearRampToValueAtTime(0.3, t + 0.5);
+    gain1.gain.exponentialRampToValueAtTime(0.01, t + 4.0);
+    gain2.gain.setValueAtTime(0, t);
+    gain2.gain.linearRampToValueAtTime(0.2, t + 0.5);
+    gain2.gain.exponentialRampToValueAtTime(0.01, t + 4.0);
+    osc1.connect(gain1);
+    osc2.connect(gain2);
+    gain1.connect(ctx.destination);
+    gain2.connect(ctx.destination);
+    osc1.start(t);
+    osc2.start(t);
+    osc1.stop(t + 4.0);
+    osc2.stop(t + 4.0);
+  } else if (type === 'marimba') {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 783.99; // G5
+    gain.gain.setValueAtTime(0.5, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.3);
   }
 };
 
@@ -1101,6 +1197,16 @@ const triggerConfetti = (x: number, y: number, color: string) => {
     }));
     setLastAction(null);
   }, [lastAction]);
+
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    if (window.navigator.vibrate) window.navigator.vibrate(10);
+  }, []);
 
   const toggleHabit = useCallback((habitId: string, dateStr: string, event?: React.MouseEvent | React.TouchEvent | any) => {
     let x = 0.5;
@@ -1164,6 +1270,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
       folderId: newFolderId,
       icon: newIcon,
       color: newColor,
+      tags: newTags,
       history: [],
       logs: {},
       reminder: {
@@ -1178,6 +1285,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
     // Reset form
     setNewName('');
     setNewIntent('');
+    setNewTags([]);
+    setNewTagInput('');
     setNewCategory(HABIT_CATEGORIES[0]);
     setNewFolderId(null);
     setNewColor(ACCENT_COLORS[0]);
@@ -1189,6 +1298,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
   const saveHabitEdit = () => {
     if (!selectedHabit || !editName.trim()) return;
+    playSound('bell');
     setHabits(prev => prev.map(h => h.id === selectedHabit.id ? {
       ...h,
       name: editName,
@@ -1197,6 +1307,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
       folderId: editFolderId,
       color: editColor,
       icon: editIcon,
+      tags: editTags,
       reminder: {
         ...h.reminder,
         active: editReminderActive,
@@ -1236,17 +1347,44 @@ const triggerConfetti = (x: number, y: number, color: string) => {
     }
   };
 
+  const executeBulkAction = () => {
+    if (selectedIds.size === 0) return;
+
+    if (bulkActionType === 'delete') {
+      setHabits(prev => prev.filter(h => !selectedIds.has(h.id)));
+      playSound('bell');
+    } else if (bulkActionType === 'folder') {
+      setHabits(prev => prev.map(h => selectedIds.has(h.id) ? { ...h, folderId: bulkTargetFolderId } : h));
+      playSound('bell');
+    } else if (bulkActionType === 'category') {
+      setHabits(prev => prev.map(h => selectedIds.has(h.id) ? { ...h, category: bulkTargetCategory } : h));
+      playSound('bell');
+    } else if (bulkActionType === 'status') {
+      const today = getTodayStr();
+      setHabits(prev => prev.map(h => {
+        if (selectedIds.has(h.id)) {
+          const logs = { ...(h.logs || {}) };
+          logs[today] = bulkTargetStatus;
+          const updated = { ...h, logs };
+          const currentStreak = calculateStreak(updated);
+          const bestStreak = Math.max(updated.bestStreak || 0, currentStreak);
+          return { ...updated, bestStreak };
+        }
+        return h;
+      }));
+      if (bulkTargetStatus === 'done') playSound('kaching');
+      else playSound('bell');
+    }
+
+    setIsSelectionMode(false);
+    setSelectedIds(new Set());
+    setShowBulkActionModal(false);
+  };
+
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setTimeout(() => {
       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 300);
-  };
-
-  const getGlassStyle = () => {
-    return {
-      '--glass-blur': `${settings.glassBlur}px`,
-      '--glass-intensity': settings.glassIntensity / 10,
-    } as React.CSSProperties;
   };
 
   const quickUpdateHabitStatus = (habitId: string, status: HabitStatus) => {
@@ -1307,7 +1445,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               initial={{ scale: 0.9, opacity: 0, y: -20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: -20 }}
-              className="fixed z-[120] p-1.5 rounded-2xl bg-neutral-900/90 border border-white/20 shadow-2xl backdrop-blur-xl min-w-[160px]"
+              className="fixed z-[120] p-1.5 rounded-2xl bg-neutral-900 border border-white/20 shadow-2xl min-w-[160px]"
               style={{ 
                 left: Math.min(window.innerWidth - 180, Math.max(20, quickActions.x - 80)),
                 top: Math.min(window.innerHeight - 200, Math.max(20, quickActions.y - 40)),
@@ -1363,10 +1501,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
         )}
       </AnimatePresence>
       {/* Ambient Background for Glassmorphism */}
-      <WatermarkBackground pureBlack={settings.pureBlack} theme={settings.theme} />
+      <WatermarkBackground pureBlack={settings.pureBlack} />
 
       <div className="relative z-10 h-full overflow-y-auto w-full hide-scrollbar">
-        <header className="flex items-center justify-between px-[16px] pt-[16px] pb-[8px] max-w-lg mx-auto sticky top-0 bg-black/40 backdrop-blur-lg z-[40] border-b border-white/5">
+        <header className="flex items-center justify-between px-[16px] pt-[16px] pb-[8px] max-w-lg mx-auto sticky top-0 bg-[#12121f] z-[40] border-b border-white/5">
               <motion.h1 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1375,6 +1513,17 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 GRAND LINE.
               </motion.h1>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setIsSelectionMode(!isSelectionMode);
+                    setSelectedIds(new Set());
+                    playSound('bell');
+                  }}
+                  className={`flex items-center justify-center w-[34px] h-[34px] rounded-full text-white border-none transition-all shadow-lg ${isSelectionMode ? 'bg-amber-500 scale-105' : 'bg-white/5 hover:bg-white/10'}`}
+                >
+                  <Layers size={16} strokeWidth={isSelectionMode ? 3 : 2} />
+                </button>
+
                 <button
                   onClick={() => {
                     playSound('bell');
@@ -1468,6 +1617,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                onLongPressCancel={handlePointerUpOrCancel}
                                isQuickActionsOpen={!!quickActions}
                                theme={settings.theme}
+                               weekDays={rollingWeekDays}
+                               isSelectionMode={isSelectionMode}
+                               isSelected={selectedIds.has(h.id)}
+                               onToggleSelection={toggleSelection}
                              />
                            ))}
                         </div>
@@ -1497,10 +1650,28 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                              onLongPressCancel={handlePointerUpOrCancel}
                              isQuickActionsOpen={!!quickActions}
                              theme={settings.theme}
+                             weekDays={rollingWeekDays}
+                             isSelectionMode={isSelectionMode}
+                             isSelected={selectedIds.has(h.id)}
+                             onToggleSelection={toggleSelection}
                           />
                         ))}
                       </div>
                     </div>
+                  )}
+                  {/* Empty State */}
+                  {habits.length === 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="py-20 text-center"
+                    >
+                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 border border-white/10">
+                        <Compass size={32} className="text-white/20" />
+                      </div>
+                      <h4 className="text-[14px] font-black uppercase tracking-widest text-white/40">No Quests Found</h4>
+                      <p className="text-[11px] text-white/20 mt-2 italic font-serif">"The fog of the Grand Line obscures your path..."</p>
+                    </motion.div>
                   )}
                 </div>
               );
@@ -1520,6 +1691,195 @@ const triggerConfetti = (x: number, y: number, color: string) => {
         </motion.div>
       </main>
 
+      {/* Selection Action Bar */}
+      <AnimatePresence>
+        {isSelectionMode && selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 20, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 20, opacity: 0, scale: 0.95 }}
+            className="fixed bottom-6 left-4 right-4 z-[90] max-w-lg mx-auto"
+          >
+            <div className="p-3 px-4 rounded-3xl border border-white/20 bg-neutral-900 shadow-2xl flex items-center justify-between gap-2">
+              <div className="flex items-center pl-1 shrink max-w-[80px] sm:max-w-none w-min sm:w-auto">
+                <div className="flex flex-col">
+                  <span className="text-[12px] sm:text-[13px] font-black text-white leading-tight">{selectedIds.size} ritual{selectedIds.size > 1 ? 's' : ''}</span>
+                  <span className="text-[8px] sm:text-[9px] font-black text-amber-500 uppercase tracking-widest leading-[1.1] mt-0.5">In Command</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => {
+                    setBulkActionType('status');
+                    setShowBulkActionModal(true);
+                  }}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white/70"
+                >
+                  <Check size={16} />
+                </button>
+                <div className="w-px h-6 bg-white/10 mx-0.5" />
+                <button
+                  onClick={() => {
+                    setBulkActionType('folder');
+                    setShowBulkActionModal(true);
+                  }}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white/70"
+                >
+                  <Folder size={16} />
+                </button>
+                <button
+                  onClick={() => {
+                    setBulkActionType('category');
+                    setShowBulkActionModal(true);
+                  }}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white/70"
+                >
+                  <Layers size={16} />
+                </button>
+                <button
+                  onClick={() => {
+                    setBulkActionType('delete');
+                    setShowBulkActionModal(true);
+                  }}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors text-red-500"
+                >
+                  <Skull size={16} />
+                </button>
+                <div className="w-px h-6 bg-white/10 mx-0.5" />
+                <button
+                  onClick={() => {
+                    setIsSelectionMode(false);
+                    setSelectedIds(new Set());
+                  }}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk Action Modal */}
+      <AnimatePresence>
+        {showBulkActionModal && (
+          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 pointer-events-none">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/80 pointer-events-auto"
+              onClick={() => setShowBulkActionModal(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="relative pointer-events-auto w-full max-w-sm max-h-[90vh] overflow-y-auto no-scrollbar bg-[#1e1e2e] border border-[#2a2a45] p-5 rounded-[32px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${bulkActionType === 'delete' ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>
+                  {bulkActionType === 'delete' ? <Skull size={20} /> : bulkActionType === 'folder' ? <Folder size={20} /> : bulkActionType === 'status' ? <Check size={20} /> : <Layers size={20} />}
+                </div>
+                
+                <h3 className="text-[18px] font-black text-white mb-1.5 leading-tight">
+                  {bulkActionType === 'delete' ? 'Confirm Purge' : bulkActionType === 'folder' ? 'Assign Fleet' : bulkActionType === 'status' ? 'Update Status' : 'Recategorize'}
+                </h3>
+                
+                <p className="text-[13px] font-medium text-white/60 mb-5 leading-snug">
+                  {bulkActionType === 'delete' 
+                    ? `Are you certain you wish to purge these ${selectedIds.size} rituals from your logbook? This cannot be undone.` 
+                    : bulkActionType === 'status'
+                    ? `Set today's status for the ${selectedIds.size} selected rituals.`
+                    : `Choose the target destination for your ${selectedIds.size} selected rituals.`}
+                </p>
+
+                {bulkActionType === 'folder' && (
+                  <div className="w-full mb-5">
+                    <div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto no-scrollbar">
+                      <button
+                        onClick={() => setBulkTargetFolderId(null)}
+                        className={`p-2.5 rounded-2xl border text-center transition-all text-[11px] font-black uppercase tracking-widest ${bulkTargetFolderId === null ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                      >
+                        Unassigned
+                      </button>
+                      {folders.map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => setBulkTargetFolderId(f.id)}
+                          className={`p-2.5 rounded-2xl border text-center transition-all text-[11px] font-black uppercase tracking-widest ${bulkTargetFolderId === f.id ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                        >
+                          {f.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {bulkActionType === 'category' && (
+                  <div className="w-full mb-5">
+                    <div className="grid grid-cols-2 gap-2">
+                      {HABIT_CATEGORIES.map(c => (
+                        <button
+                          key={c}
+                          onClick={() => setBulkTargetCategory(c)}
+                          className={`py-2 px-3 rounded-[14px] border text-center transition-all text-[10px] font-black uppercase tracking-widest ${bulkTargetCategory === c ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {bulkActionType === 'status' && (
+                  <div className="w-full mb-5">
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => setBulkTargetStatus('done')}
+                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'done' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                      >
+                        <Check size={16} />
+                        Done
+                      </button>
+                      <button
+                        onClick={() => setBulkTargetStatus('skip')}
+                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'skip' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                      >
+                        <Minus size={16} />
+                        Skip
+                      </button>
+                      <button
+                        onClick={() => setBulkTargetStatus('empty')}
+                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'empty' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                      >
+                        <RotateCcw size={16} />
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 w-full mt-auto">
+                  <button
+                    onClick={() => setShowBulkActionModal(false)}
+                    className="flex-1 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-[11px] font-black uppercase tracking-widest text-white/70 transition-colors"
+                  >
+                    Hold On
+                  </button>
+                  <button
+                    onClick={executeBulkAction}
+                    className={`flex-1 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${bulkActionType === 'delete' ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-amber-500 text-neutral-900 shadow-lg shadow-amber-500/30'}`}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Undo Action Toast */}
       <AnimatePresence>
         {lastAction && (
@@ -1529,7 +1889,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             exit={{ opacity: 0, y: 100, x: '-50%' }}
             className="fixed bottom-10 left-1/2 z-50 pointer-events-auto"
           >
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-neutral-900 border border-white/20 shadow-2xl backdrop-blur-xl">
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-neutral-900 border border-white/20 shadow-2xl">
               <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">Action Recorded</span>
               <button 
                 onClick={undoAction}
@@ -1554,12 +1914,12 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] text-white overflow-y-auto no-scrollbar modal"
+            className="fixed inset-0 z-[100] w-full text-white overflow-y-auto overflow-x-hidden no-scrollbar modal"
             style={{ backgroundColor: '#0f0f14', WebkitOverflowScrolling: 'touch' }}
           >
-            <WatermarkBackground pureBlack={settings.pureBlack} theme={settings.theme} />
+            <WatermarkBackground pureBlack={settings.pureBlack} />
             {/* Header */}
-            <div className="px-4 py-4 flex items-center gap-4 bg-black/20 backdrop-blur-md sticky top-0 z-20 border-b border-white/5">
+            <div className="px-4 py-4 flex items-center gap-4 bg-[#12121f] sticky top-0 z-20 border-b border-white/5">
               <button 
                 onClick={() => setShowSettings(false)}
                 className="p-2 -ml-2 text-white hover:text-white/80 transition-colors"
@@ -1613,7 +1973,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             </div>
 
                             <span 
-                              className="absolute bottom-[12px] left-[12px] text-[12px] font-[800] tracking-[1.5px] uppercase"
+                              className="absolute bottom-[10px] left-[10px] right-[24px] text-[10px] sm:text-[11px] font-[800] tracking-[1.5px] uppercase truncate"
                               style={{ 
                                 color: '#ffffff',
                                 WebkitTextFillColor: '#ffffff',
@@ -1624,7 +1984,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             </span>
                             
                             <div 
-                              className="absolute bottom-[14px] right-[12px] w-[10px] h-[10px] rounded-full" 
+                              className="absolute bottom-[12px] right-[10px] w-[8px] h-[8px] rounded-full shrink-0" 
                               style={{ backgroundColor: accent, boxShadow: `0 0 8px ${accent}` }}
                             />
                             
@@ -1643,7 +2003,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
                   {/* Pure Black Toggle */}
                   <div className="flex items-start justify-between gap-4">
-                    <div className="pr-4">
+                    <div>
                       <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>True Noir Mode</h4>
                       <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Use pure OLED black for backgrounds. Saves battery and increases contrast.</p>
                     </div>
@@ -1654,27 +2014,30 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     />
                   </div>
 
-                  <div className="h-px bg-white/5" />
+                <div className="h-px bg-white/5" />
 
-                  {/* Glass Effect */}
-                  <div>
-                    <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Vitreous Intensity</h4>
-                    <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Adjust the transparency and blur of glass panels.</p>
-                    <input
-                      type="range"
-                      min="0"
-                      max="10"
-                      step="1"
-                      value={settings.glassIntensity}
-                      onChange={(e) => setSettings(s => ({ ...s, glassIntensity: parseInt(e.target.value) }))}
-                      className="glass-slider mt-6"
-                      style={{ 
-                        background: `linear-gradient(90deg, ${(THEMES[settings.theme] || THEMES.VOID).primary} ${settings.glassIntensity * 10}%, rgba(255,255,255,0.1) ${settings.glassIntensity * 10}%)`
-                      }}
-                    />
+                {/* Rolling Window */}
+                <div>
+                  <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Tracking Horizon</h4>
+                    <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Number of days visible in your rolling window.</p>
+                    <div className="flex items-center gap-4 mt-6">
+                      <input
+                        type="range"
+                        min="3"
+                        max="14"
+                        step="1"
+                        value={settings.rollingWindowDays}
+                        onChange={(e) => setSettings(s => ({ ...s, rollingWindowDays: parseInt(e.target.value) }))}
+                        className="glass-slider flex-1"
+                        style={{ 
+                          background: `linear-gradient(90deg, ${(THEMES[settings.theme] || THEMES.VOID).primary} ${((settings.rollingWindowDays - 3) / 11) * 100}%, rgba(255,255,255,0.1) ${((settings.rollingWindowDays - 3) / 11) * 100}%)`
+                        }}
+                      />
+                      <span className="w-8 text-center text-white font-black text-sm">{settings.rollingWindowDays}</span>
+                    </div>
                     <div className="flex justify-between text-[10px] font-bold text-white/30 mt-3 tracking-widest uppercase">
-                      <span>Spectral</span>
-                      <span>Opaque</span>
+                      <span>Focused</span>
+                      <span>Panorama</span>
                     </div>
                   </div>
                 </div>
@@ -1710,6 +2073,36 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     />
                   </div>
                   
+                  {settings.remindersEnabled && (
+                    <div className="flex flex-col gap-3 px-1 pt-4 border-t border-white/10">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-[16px] text-white font-bold leading-tight">Reminder Tone</h4>
+                          <p className="text-white/60 text-[13px] mt-1 leading-snug">Choose the gentle sound that will play.</p>
+                        </div>
+                        <div className="relative">
+                           <select
+                            value={settings.reminderTone || 'chime'}
+                            onChange={(e) => {
+                              setSettings(s => ({ ...s, reminderTone: e.target.value }));
+                              playSound(e.target.value);
+                            }}
+                            className="appearance-none bg-white/5 border border-white/10 text-white text-[13px] font-bold px-4 py-2 pr-8 rounded-xl outline-none focus:border-white/30 cursor-pointer"
+                           >
+                              {NOTIFICATION_TONES.map(tone => (
+                                <option key={tone.id} value={tone.id} className="bg-neutral-900 text-white">
+                                  {tone.label}
+                                </option>
+                              ))}
+                           </select>
+                           <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                             <ChevronDown size={14} />
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5">
                     <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/40 shrink-0">
                       <Info size={16} />
@@ -1718,7 +2111,76 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                   </div>
                 </div>
               </section>
- 
+
+              {/* Journey Info Section */}
+              <section>
+                <div className="flex items-center gap-2 mb-6 ml-2">
+                  <Compass size={18} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
+                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }}>Journey Insight</h3>
+                </div>
+                
+                <div className="p-6 rounded-[32px] border border-white/15 bg-white/[0.05] shadow-2xl space-y-6">
+                  <div className="flex flex-col gap-4 px-1">
+                    <div>
+                      <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Ship's Inauguration</h4>
+                      <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>The exact moment you set sail on this voyage.</p>
+                      
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+                          <Calendar size={14} className="text-white/40" />
+                          <span className="text-[13px] font-bold text-white/80">
+                            {(() => {
+                              const d = new Date(settings.startedAt);
+                              if (isNaN(d.getTime())) return 'Invalid Date';
+                              return d.toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              });
+                            })()}
+                          </span>
+                        </div>
+                        
+                        <div className="relative inline-block">
+                          <input 
+                            type="datetime-local"
+                            value={(() => {
+                              const d = new Date(settings.startedAt);
+                              return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 16);
+                            })()}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                const d = new Date(e.target.value);
+                                if (!isNaN(d.getTime())) {
+                                  setSettings(s => ({ ...s, startedAt: d.toISOString() }));
+                                }
+                              }
+                            }}
+                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10 block"
+                            id="voyage-date-picker"
+                          />
+                          <button 
+                            type="button"
+                            className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black uppercase tracking-widest text-white/40 group-hover:bg-white/10 transition-colors relative z-0 w-full h-full"
+                          >
+                            Modify
+                          </button>
+                        </div>
+                        
+                        <button 
+                          onClick={() => setSettings(s => ({ ...s, startedAt: new Date().toISOString() }))}
+                          className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 transition-colors"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
                {/* Data Management Section */}
               <section>
                 <div className="flex items-center gap-2 mb-6 ml-2">
@@ -1754,6 +2216,24 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                   </label>
  
                   <button 
+                    onClick={() => {
+                      setShowSettings(false);
+                      setCurrentTutorialStep(0);
+                      setSettings(s => ({ ...s, hasSeenTutorial: false }));
+                    }}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Compass size={18} className="text-amber-400" />
+                      <div className="text-left">
+                        <span className="block text-[15px] font-bold text-white" style={{ color: '#ffffff' }}>Replay Tutorial</span>
+                        <span className="block text-[12px] text-white font-medium" style={{ color: '#ffffff' }}>View the onboarding guide again.</span>
+                      </div>
+                    </div>
+                    <ChevronRight size={16} className="text-white/20 group-hover:text-white/60 transition-colors" />
+                  </button>
+
+                  <button 
                     onClick={resetData}
                     className="w-full flex items-center justify-between p-4 rounded-2xl bg-red-500/5 hover:bg-red-500/10 transition-all border border-red-500/20 group"
                   >
@@ -1787,9 +2267,9 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             className="fixed inset-0 z-[100] text-white overflow-y-auto no-scrollbar modal"
             style={{ backgroundColor: 'var(--bg-primary)', WebkitOverflowScrolling: 'touch' }}
           >
-            <WatermarkBackground pureBlack={settings.pureBlack} theme={settings.theme} />
+            <WatermarkBackground pureBlack={settings.pureBlack} />
             {/* Header */}
-            <div className="px-5 py-3 flex items-center justify-between gap-4 bg-black/40 backdrop-blur-md sticky top-0 z-20 border-b border-white/5">
+            <div className="px-5 py-3 flex items-center justify-between gap-4 bg-[#12121f] sticky top-0 z-20 border-b border-white/5">
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => setShowAddModal(false)}
@@ -1822,7 +2302,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             <div className="px-4 py-8 pb-40 max-w-lg mx-auto space-y-6">
               
               {/* Identity & Intent */}
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg">
                 <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
                   <Star size={12} /> Identity & Intent
                 </h3>
@@ -1854,11 +2334,55 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                       boxShadow: activeInput === 'intent' ? `0 0 12px ${newColor}20` : 'none'
                     }}
                   />
+
+                  {/* Tags Input */}
+                  <div className="pt-2">
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {newTags.map(tag => (
+                        <span key={tag} className="px-2 py-1 bg-white/10 rounded-full text-[10px] font-bold text-white flex items-center gap-1 border border-white/10">
+                          #{tag}
+                          <button onClick={() => setNewTags(prev => prev.filter(t => t !== tag))} className="text-white/40 hover:text-white">
+                            <X size={10} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <input 
+                      type="text" 
+                      value={newTagInput}
+                      onChange={(e) => setNewTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ',') {
+                          e.preventDefault();
+                          const val = newTagInput.trim().replace(/^#/, '');
+                          if (val && !newTags.includes(val)) {
+                            setNewTags(prev => [...prev, val]);
+                          }
+                          setNewTagInput('');
+                        }
+                      }}
+                      onFocus={() => setActiveInput('tags')}
+                      onBlur={() => {
+                        setActiveInput(null);
+                        const val = newTagInput.trim().replace(/^#/, '');
+                        if (val && !newTags.includes(val)) {
+                          setNewTags(prev => [...prev, val]);
+                        }
+                        setNewTagInput('');
+                      }}
+                      placeholder="Add tags (press Enter to add)"
+                      className="w-full bg-black/40 border-2 px-4 py-3 rounded-xl text-[13px] font-medium text-white placeholder:text-white/30 focus:outline-none transition-all"
+                      style={{ 
+                        borderColor: activeInput === 'tags' ? newColor : 'rgba(255,255,255,0.05)',
+                        boxShadow: activeInput === 'tags' ? `0 0 12px ${newColor}20` : 'none'
+                      }}
+                    />
+                  </div>
                 </div>
               </section>
 
               {/* Path & Folder */}
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg">
                 <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
                   <Folder size={12} /> Placement
                 </h3>
@@ -1923,7 +2447,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               </section>
 
               {/* Appearance */}
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg">
                 <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
                   <Wind size={12} /> Appearance
                 </h3>
@@ -1935,14 +2459,18 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                         <div key={color} className="flex flex-col items-center shrink-0 snap-center p-1.5">
                           <button
                             onClick={() => setNewColor(color)}
-                            className={`w-5 h-5 rounded-full shrink-0 transition-all duration-300 flex items-center justify-center ${
+                            className={`w-6 h-6 rounded-full shrink-0 transition-all duration-300 flex items-center justify-center relative ${
                               newColor === color 
-                                ? 'scale-110 ring-2 ring-white ring-offset-2 ring-offset-black shadow-lg shadow-black/50' 
-                                : 'opacity-40 hover:opacity-100 scale-100'
+                                ? 'shadow-lg shadow-black/40' 
+                                : 'opacity-40 hover:opacity-100'
                             }`}
                             style={{ backgroundColor: color }}
                             aria-label={`Select color ${color}`}
-                          />
+                          >
+                            {newColor === color && (
+                              <div className="absolute -inset-[3px] rounded-full border-2 border-white ring-1 ring-black/20" />
+                            )}
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -1980,7 +2508,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               </section>
 
               {/* Logistics */}
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg backdrop-blur-md mb-8">
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg mb-8">
                 <div className="flex items-center justify-between pb-1">
                   <h3 className="text-[10px] font-black uppercase tracking-[2px] text-white/50 pl-1 flex items-center gap-2 m-0">
                     <Timer size={12} /> Reminder
@@ -2052,6 +2580,80 @@ const triggerConfetti = (x: number, y: number, color: string) => {
         )}
       </AnimatePresence>
 
+      {/* Tutorial Overlay */}
+      <AnimatePresence>
+        {!settings.hasSeenTutorial && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-sm rounded-[32px] p-8 border border-white/10 bg-neutral-900 shadow-2xl relative overflow-hidden"
+            >
+              <div 
+                className="absolute inset-0 opacity-20"
+                style={{ 
+                  background: `radial-gradient(circle at 50% 0%, ${(THEMES[settings.theme] || THEMES.VOID).primary}, transparent 70%)` 
+                }} 
+              />
+              <div className="relative z-10">
+                <div className="flex justify-center mb-6">
+                  <div 
+                    className="w-16 h-16 rounded-full flex items-center justify-center border border-white/20 shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${(THEMES[settings.theme] || THEMES.VOID).primary}40, transparent)` }}
+                  >
+                    {React.createElement(TUTORIAL_STEPS[currentTutorialStep].icon, { 
+                      size: 32, 
+                      style: { color: (THEMES[settings.theme] || THEMES.VOID).primary } 
+                    })}
+                  </div>
+                </div>
+                
+                <div className="text-center mb-8">
+                  <h2 className="text-[24px] font-black tracking-tight text-white mb-3">
+                    {TUTORIAL_STEPS[currentTutorialStep].title}
+                  </h2>
+                  <p className="text-white/60 text-[14px] leading-relaxed font-medium">
+                    {TUTORIAL_STEPS[currentTutorialStep].text}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 mt-8">
+                  {/* Dots indicator */}
+                  <div className="flex items-center gap-2">
+                    {TUTORIAL_STEPS.map((_, idx) => (
+                      <div 
+                        key={idx}
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          idx === currentTutorialStep 
+                            ? 'w-6 bg-amber-500' 
+                            : 'w-2 bg-white/20'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      playSound('bell');
+                      if (currentTutorialStep < TUTORIAL_STEPS.length - 1) {
+                        setCurrentTutorialStep(prev => prev + 1);
+                      } else {
+                        setSettings(s => ({ ...s, hasSeenTutorial: true }));
+                      }
+                    }}
+                    className="px-6 py-3 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-[12px] hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                  >
+                    {currentTutorialStep < TUTORIAL_STEPS.length - 1 ? 'Next' : 'Embark'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {habitToDelete && (
@@ -2059,15 +2661,14 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-md flex items-center justify-center p-6"
+            className="fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-6"
             onClick={() => setHabitToDelete(null)}
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="p-6 rounded-2xl w-full max-w-sm glass-panel"
-              style={getGlassStyle()}
+              className="p-6 rounded-2xl w-full max-w-sm bg-[#16162a] border border-[#2a2a45]"
               onClick={e => e.stopPropagation()}
             >
               <h3 className="text-xl font-bold mb-2">Delete Ritual?</h3>
@@ -2105,10 +2706,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             className="fixed inset-0 z-[100] text-white overflow-y-auto no-scrollbar modal"
             style={{ backgroundColor: 'var(--bg-primary)', WebkitOverflowScrolling: 'touch' }}
           >
-            <WatermarkBackground pureBlack={settings.pureBlack} theme={settings.theme} />
+            <WatermarkBackground pureBlack={settings.pureBlack} />
 
             {/* Header */}
-            <div className="px-4 py-4 flex items-center justify-between gap-4 bg-black/20 backdrop-blur-md sticky top-0 z-20 border-b border-white/5">
+            <div className="px-4 py-4 flex items-center justify-between gap-4 bg-[#12121f] sticky top-0 z-20 border-b border-white/5">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => {
@@ -2164,7 +2765,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
                 return (
                   <>
-                    <div className="p-4 rounded-2xl glass-panel space-y-4 shadow-lg backdrop-blur-md" style={{...getGlassStyle(), backgroundColor: 'rgba(255,255,255,0.05)'}}>
+                    <div className="p-4 rounded-2xl space-y-4 shadow-lg bg-[#1e1e2e] border border-[#2a2a45]" style={{backgroundColor: 'rgba(255,255,255,0.05)'}}>
                       {isEditingDetails ? (
                         <div className="space-y-6">
                           <div className="space-y-3">
@@ -2185,6 +2786,45 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                  onChange={(e) => setEditIntent(e.target.value)}
                                  placeholder="Why does this matter?"
                                  className="w-full bg-black/40 border border-white/10 px-4 py-3 rounded-xl text-[14px] font-medium text-white focus:outline-none focus:border-white/30 transition-all italic"
+                               />
+                             </div>
+                             
+                             {/* Tags Input (Edit) */}
+                             <div>
+                               <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Tags</h4>
+                               <div className="flex flex-wrap gap-2 mb-2">
+                                 {editTags.map(tag => (
+                                   <span key={tag} className="px-2 py-1 bg-white/10 rounded-full text-[10px] font-bold text-white flex items-center gap-1 border border-white/10">
+                                     #{tag}
+                                     <button onClick={() => setEditTags(prev => prev.filter(t => t !== tag))} className="text-white/40 hover:text-white">
+                                       <X size={10} />
+                                     </button>
+                                   </span>
+                                 ))}
+                               </div>
+                               <input 
+                                 type="text" 
+                                 value={editTagInput}
+                                 onChange={(e) => setEditTagInput(e.target.value)}
+                                 onKeyDown={(e) => {
+                                   if (e.key === 'Enter' || e.key === ',') {
+                                     e.preventDefault();
+                                     const val = editTagInput.trim().replace(/^#/, '');
+                                     if (val && !editTags.includes(val)) {
+                                       setEditTags(prev => [...prev, val]);
+                                     }
+                                     setEditTagInput('');
+                                   }
+                                 }}
+                                 onBlur={() => {
+                                   const val = editTagInput.trim().replace(/^#/, '');
+                                   if (val && !editTags.includes(val)) {
+                                     setEditTags(prev => [...prev, val]);
+                                   }
+                                   setEditTagInput('');
+                                 }}
+                                 placeholder="Add tags (press Enter to add)"
+                                 className="w-full bg-black/40 border border-white/10 px-4 py-3 rounded-xl text-[13px] font-medium text-white focus:outline-none focus:border-white/30 transition-all"
                                />
                              </div>
                           </div>
@@ -2254,14 +2894,18 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                   <button
                                     key={color}
                                     onClick={() => setEditColor(color)}
-                                    className={`w-5 h-5 rounded-full shrink-0 transition-all duration-300 flex items-center justify-center ${
+                                    className={`w-6 h-6 rounded-full shrink-0 transition-all duration-300 flex items-center justify-center relative ${
                                       editColor === color 
-                                        ? 'scale-110 ring-2 ring-white ring-offset-2 ring-offset-black shadow-lg shadow-black/50' 
-                                        : 'opacity-40 hover:opacity-100 scale-100'
+                                        ? 'shadow-lg shadow-black/40' 
+                                        : 'opacity-40 hover:opacity-100'
                                     }`}
                                     style={{ backgroundColor: color }}
                                     aria-label={`Select color ${color}`}
-                                  />
+                                  >
+                                    {editColor === color && (
+                                      <div className="absolute -inset-[3px] rounded-full border-2 border-white ring-1 ring-black/20" />
+                                    )}
+                                  </button>
                                 </div>
                               ))}
                             </div>
@@ -2334,7 +2978,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     <VoyageMap heatmapWeeks={heatmapWeeks} habitColor={habitColor} />
 
                     {/* Reminder Settings */}
-                    <div className="p-5 glass-panel rounded-2xl">
+                    <div className="p-5 bg-[#1e1e2e] border border-[#2a2a45] rounded-2xl">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <Timer size={20} className={selectedHabit.reminder?.active ? 'text-blue-400' : 'text-white/30'} />
@@ -2406,7 +3050,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                       )}
                     </div>
 
-                    <div className="p-5 sm:p-6 rounded-2xl glass-panel" style={getGlassStyle()}>
+                    <div className="p-5 sm:p-6 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45]">
                       <div className="flex items-center justify-between mb-6">
                         <h4 className="text-[17px] font-bold text-white tracking-tight uppercase">Progress Visualization</h4>
                         <div className="px-2 py-1 bg-white/10 rounded-lg border border-white/20">
@@ -2485,7 +3129,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                     if (active && payload && payload.length) {
                                         const data = payload[0].payload;
                                         return (
-                                            <div className="bg-black/80 backdrop-blur-md p-2 border border-white/10 rounded-lg text-[10px]">
+                                            <div className="bg-black/90 p-2 border border-white/10 rounded-lg text-[10px]">
                                                 <p className="font-bold">{data.name}</p>
                                                 <p className={data.status === 'done' ? 'text-emerald-400' : 'text-white/40'}>
                                                     {data.status === 'done' ? 'Succeeded' : data.status === 'skip' ? 'Strategic Skip' : 'Not Attempted'}
