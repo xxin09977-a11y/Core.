@@ -59,7 +59,7 @@ import {
   Smile,
   Calendar,
   Anchor, Compass, Coins, Map, Ship, Swords, Crown, Ghost, Skull, RotateCcw,
-  Activity, Folder, ChevronDown, ChevronUp, Layers, Bell, Database, Download, Upload, ChevronRight, Info
+  Activity, Folder, ChevronDown, ChevronUp, Layers, Bell, Database, Download, Upload, ChevronRight, ChevronLeft, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -75,7 +75,6 @@ interface Habit {
   color: string;
   history: HabitStatus[]; // Legacy
   logs?: Record<string, HabitStatus>; // YYYY-MM-DD -> status
-  tags?: string[];
   bestStreak?: number;
   reminder?: {
     time: string; // HH:mm format
@@ -184,40 +183,52 @@ const ICON_MAP = {
 };
 
 const ACCENT_COLORS = [
-  '#EF4444', // Luffy Red
-  '#22C55E', // Zoro Green
-  '#F97316', // Nami Orange
-  '#3B82F6', // Sanji Blue
-  '#F472B6', // Chopper Pink
-  '#8B5CF6', // Robin Purple
-  '#06B6D4', // Franky Cyan
-  '#EAB308', // Usopp Yellow
-  '#E4E4E7', // Brook White
-  '#0284C7', // Jinbe Blue
+  '#ffffff', // White
+  '#27272a', // Dark
+  '#f43f5e', // Rose
+  '#ec4899', // Pink
+  '#d946ef', // Fuchsia
+  '#a855f7', // Purple
+  '#8b5cf6', // Violet
+  '#6366f1', // Indigo
+  '#3b82f6', // Blue
+  '#0ea5e9', // Sky
+  '#06b6d4', // Cyan
+  '#14b8a6', // Teal
+  '#10b981', // Emerald
+  '#22c55e', // Green
+  '#84cc16', // Lime
+  '#eab308', // Yellow
+  '#f59e0b', // Amber
+  '#f97316', // Orange
+  '#ef4444', // Red
 ];
 
 const COLOR_LABELS: Record<string, string> = {
-  '#EF4444': 'Red',
-  '#22C55E': 'Green',
-  '#F97316': 'Orange',
-  '#3B82F6': 'Blue',
-  '#F472B6': 'Pink',
-  '#8B5CF6': 'Purple',
-  '#06B6D4': 'Cyan',
-  '#EAB308': 'Yellow',
-  '#E4E4E7': 'White',
-  '#0284C7': 'Azure'
+  '#ffffff': 'White',
+  '#27272a': 'Black',
+  '#f43f5e': 'Rose',
+  '#ec4899': 'Pink',
+  '#d946ef': 'Fuchsia',
+  '#a855f7': 'Purple',
+  '#8b5cf6': 'Violet',
+  '#6366f1': 'Indigo',
+  '#3b82f6': 'Blue',
+  '#0ea5e9': 'Sky',
+  '#06b6d4': 'Cyan',
+  '#14b8a6': 'Teal',
+  '#10b981': 'Emerald',
+  '#22c55e': 'Green',
+  '#84cc16': 'Lime',
+  '#eab308': 'Yellow',
+  '#f59e0b': 'Amber',
+  '#f97316': 'Orange',
+  '#ef4444': 'Red',
 };
 
 const THEMES: Record<string, {primary: string, secondary: string}> = {
-  VOID: { primary: '#6c63ff', secondary: '#c026d3' }, // Deep purple/pink
-  AURORA: { primary: '#38bdf8', secondary: '#34d399' }, // Cyan/Green
-  MATCHA: { primary: '#4ade80', secondary: '#fcd34d' }, // Green/Yellow
-  CYBERPUNK: { primary: '#f0abfc', secondary: '#fb923c' }, // Pink/Orange
-  'MIDNIGHT OCEAN': { primary: '#0ea5e9', secondary: '#1d4ed8' }, // Blues
-  SAKURA: { primary: '#f472b6', secondary: '#fda4af' }, // Pinks
-  EMBER: { primary: '#f97316', secondary: '#dc2626' }, // Orange/Red
-  MONOCHROME: { primary: '#e2e8f0', secondary: '#64748b' }, // Gray/Slate
+  BLACK: { primary: '#ffffff', secondary: '#71717a' },
+  WHITE: { primary: '#000000', secondary: '#a1a1aa' },
 };
 
 const QUOTES = [
@@ -229,14 +240,8 @@ const QUOTES = [
 ];
 
 const THEME_SWATCHES: Record<string, string> = {
-  VOID: 'linear-gradient(135deg, #2d2b55, #1e1e3f)',
-  AURORA: 'linear-gradient(135deg, #1a2a4a, #1e3a5f)',
-  MATCHA: 'linear-gradient(135deg, #1a3a2a, #1f4a30)',
-  CYBERPUNK: 'linear-gradient(135deg, #3d1060, #1a0040)',
-  'MIDNIGHT OCEAN': 'linear-gradient(135deg, #0a2040, #102a55)',
-  SAKURA: 'linear-gradient(135deg, #3d1030, #2a0820)',
-  EMBER: 'linear-gradient(135deg, #3d1500, #2a0f00)',
-  MONOCHROME: 'linear-gradient(135deg, #2a2a2a, #1a1a1a)',
+  BLACK: 'linear-gradient(135deg, #18181b, #09090b)',
+  WHITE: 'linear-gradient(135deg, #f4f4f5, #ffffff)',
 };
 
 const HABIT_CATEGORIES = [
@@ -273,7 +278,7 @@ const INITIAL_HABITS: Habit[] = [
 // Watermark Background Component - Optimized
 const WatermarkBackground = ({ pureBlack }: { pureBlack?: boolean }) => {
   return (
-    <div className={`fixed inset-0 pointer-events-none z-[-1] transition-colors duration-500 ${pureBlack ? 'bg-black' : 'bg-[#0f0f14]'}`}>
+    <div className={`fixed inset-0 pointer-events-none z-[-1] transition-colors duration-500 ${pureBlack ? 'bg-black' : 'bg-[var(--bg-primary)]'}`}>
       {!pureBlack && (
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
@@ -322,7 +327,7 @@ const MemoizedHabitCard = React.memo(({
           onEdit();
         }
       }}
-      className={`relative rounded-[16px] mb-3 flex bg-[#1e1e2e] border border-[#2a2a45] overflow-hidden transition-transform active:scale-[0.98] ${isSelected ? 'ring-2 ring-amber-500/50' : ''}`}
+      className={`relative rounded-2xl mb-2 flex bg-[var(--bg-card)] backdrop-blur-md border border-[var(--border-primary)] shadow-sm hover:shadow-md overflow-hidden transition-all duration-300 active:scale-[0.98] ${isSelected ? 'ring-2 ring-amber-500/50' : ''}`}
       onPointerDown={(e) => !isSelectionMode && onLongPress(e, habit)}
       onPointerUp={onLongPressCancel}
       onPointerLeave={onLongPressCancel}
@@ -330,45 +335,36 @@ const MemoizedHabitCard = React.memo(({
     >
       {isSelectionMode && (
         <div className="absolute top-2 left-2 z-30">
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-amber-500 border-amber-500' : 'border-white/20 bg-black/20'}`}>
-            {isSelected && <Check size={12} strokeWidth={4} className="text-white" />}
+          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-amber-500 border-amber-500' : 'border-white/20 bg-black/20'}`}>
+            {isSelected && <Check size={10} strokeWidth={4} className="text-white" />}
           </div>
         </div>
       )}
-      <div className={`flex flex-col flex-1 py-[10px] pr-[12px] pl-[10px] ${isSelectionMode ? 'pl-[36px]' : ''}`}>
-        <div className="flex items-center gap-2 mb-2">
+      <div className={`flex flex-col flex-1 py-2 pr-2.5 pl-2.5 ${isSelectionMode ? 'pl-8' : ''}`}>
+        <div className="flex items-center gap-2 mb-1.5">
           <div 
-            className="w-[28px] h-[28px] rounded-lg flex items-center justify-center shrink-0 bg-[#252540]" 
+            className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-[var(--bg-input)]" 
             style={{ color: habitColor }}
           >
-            <IconComponent size={14} strokeWidth={2.5} />
+            <IconComponent size={12} strokeWidth={2.5} />
           </div>
           <div className="flex flex-col flex-1 overflow-hidden mr-2">
-            <h3 className="text-[14px] font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis tracking-tight leading-tight">
+            <h3 className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap overflow-hidden text-ellipsis tracking-tight leading-loose">
               {habit.name}
             </h3>
-            {habit.tags && habit.tags.length > 0 && (
-              <div className="flex items-center gap-1 mt-0.5 overflow-x-auto no-scrollbar pb-0.5">
-                {habit.tags.map(tag => (
-                  <span key={tag} className="text-[9px] font-bold px-1.5 py-[1px] rounded bg-white/10 text-white/60 tracking-wide uppercase shrink-0">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <div 
-              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 bg-[#1a1a30]"
-              style={{ color: (THEMES[theme] || THEMES.VOID).secondary }}
+              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 bg-[var(--bg-stats)]"
+              style={{ color: (THEMES[theme] || THEMES.BLACK).secondary }}
             >
-              <Flame size={10} />
+              <Flame size={9} />
               <span>{calculateStreak(habit)}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-between gap-1 px-0.5 pb-0.5">
+        <div className="flex justify-between gap-1 px-0.5 pb-0">
           {weekDays.map((dateStr) => {
             const status = habit.logs?.[dateStr] || 'empty';
             const isToday = dateStr === getTodayStr();
@@ -378,17 +374,18 @@ const MemoizedHabitCard = React.memo(({
             const isSkip = status === 'skip';
 
             let dayCircleStyle: React.CSSProperties = {
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.5)'
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-primary)',
+              color: 'var(--text-muted)',
+              boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.05), 0 2px 4px rgba(0,0,0,0.1)'
             };
             
             if (isDone) {
-              dayCircleStyle = { background: habitColor, border: 'none', color: 'white' };
+              dayCircleStyle = { background: habitColor, border: 'none', color: theme === 'WHITE' ? '#ffffff' : '#000000', boxShadow: `inset 0 1px 1px rgba(255,255,255,0.4), 0 2px 8px ${habitColor}60` };
             } else if (isSkip) {
-              dayCircleStyle = { background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)', color: '#f87171' };
+              dayCircleStyle = { background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)', color: '#f87171', boxShadow: 'inset 0 1px 1px rgba(248,113,113,0.2), 0 2px 4px rgba(0,0,0,0.1)' };
             } else if (isToday) {
-              dayCircleStyle = { background: 'rgba(108,99,255,0.12)', border: '1.5px solid #6c63ff', color: 'rgba(255,255,255,0.6)' };
+              dayCircleStyle = { background: 'rgba(108,99,255,0.12)', border: '1.5px solid #6c63ff', color: 'var(--text-muted)', boxShadow: 'inset 0 1px 1px rgba(108,99,255,0.4), 0 2px 8px rgba(108,99,255,0.3)' };
             }
 
             return (
@@ -398,23 +395,23 @@ const MemoizedHabitCard = React.memo(({
                   e.stopPropagation();
                   onToggle(habit.id, dateStr, e);
                 }}
-                className={`flex-1 flex flex-col items-center gap-[4px] p-[6px_2px] rounded-xl transition-colors active:scale-90 ${isToday ? 'bg-white/5' : ''}`}
+                className={`flex-1 flex flex-col items-center gap-1 p-1 rounded-lg transition-colors active:scale-95 ${isToday ? 'bg-[var(--bg-stats)]' : ''}`}
               >
-                <span className={`text-[8px] font-black uppercase tracking-tighter leading-none ${isToday ? 'text-white' : 'text-white/20'}`}>
+                <span className={`text-[8px] font-black uppercase tracking-tighter leading-none ${isToday ? 'text-[var(--text-primary)]' : 'text-[var(--text-dim)]'}`}>
                   {dayName}
                 </span>
                 <div
-                  className={`w-[28px] h-[28px] rounded-lg flex items-center justify-center text-[10px] font-bold`}
+                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center text-[9px] font-bold`}
                   style={dayCircleStyle}
                 >
                   <div className="relative flex items-center justify-center w-full h-full">
-                    <span className={`absolute top-0.5 right-[1.5px] text-[8px] font-black leading-none ${isDone || isSkip ? 'text-white/70' : 'text-white/40'}`}>
+                    <span className={`absolute top-0.5 right-[1.5px] text-[7px] font-black leading-none ${isDone || isSkip ? 'text-white' : 'text-[var(--text-muted)]'}`}>
                       {dateNum}
                     </span>
-                    {isDone && <Check size={15} strokeWidth={4} className="text-white z-10" />}
-                    {isSkip && <Minus size={15} strokeWidth={4} className="text-red-400 z-10" />}
+                    {isDone && <Check size={12} strokeWidth={4} className="text-white mt-1 z-10" />}
+                    {isSkip && <Minus size={12} strokeWidth={4} className="text-red-400 mt-1 z-10" />}
                     {isToday && !isDone && !isSkip && (
-                      <div className="w-1.5 h-1.5 rounded-full shadow-sm" style={{ backgroundColor: habitColor }} />
+                      <div className="w-1.5 h-1.5 rounded-full shadow-sm mt-1" style={{ backgroundColor: habitColor }} />
                     )}
                   </div>
                 </div>
@@ -429,92 +426,39 @@ const MemoizedHabitCard = React.memo(({
 
 const DetailStats = React.memo(({ totalDone, streak, bestStreak, completionRate }: { totalDone: number; streak: number; bestStreak: number; completionRate: number }) => (
   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div className="p-4 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45] flex flex-col justify-between">
-      <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+    <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-primary)] flex flex-col justify-between">
+      <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center gap-1.5">
         <Check size={12} className="text-emerald-400" /> Total Logs
       </div>
       <div className="text-[26px] font-black text-emerald-400">{totalDone}</div>
     </div>
-    <div className="p-4 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45] flex flex-col justify-between">
-      <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+    <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-primary)] flex flex-col justify-between">
+      <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center gap-1.5">
         <Activity size={12} className="text-blue-400" /> Rate
       </div>
       <div className="text-[26px] font-black text-blue-400">{completionRate}%</div>
     </div>
-    <div className="p-4 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45] flex flex-col justify-between">
-      <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+    <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-primary)] flex flex-col justify-between">
+      <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center gap-1.5">
         <Flame size={12} className="text-orange-500" /> Cur Streak
       </div>
-      <div className="text-[26px] font-black text-white">{streak}</div>
+      <div className="text-[26px] font-black text-[var(--text-primary)]">{streak}</div>
     </div>
-    <div className="p-4 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45] flex flex-col justify-between">
-      <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+    <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-primary)] flex flex-col justify-between">
+      <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center gap-1.5">
         <Star size={12} className="text-yellow-500" /> Max Streak
       </div>
-      <div className="text-[26px] font-black text-white">{bestStreak}</div>
+      <div className="text-[26px] font-black text-[var(--text-primary)]">{bestStreak}</div>
     </div>
-  </div>
-));
-
-const VoyageMap = React.memo(({ heatmapWeeks, habitColor }: { heatmapWeeks: any[][]; habitColor: string }) => (
-  <div className="p-5 sm:p-6 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45]">
-      <div className="flex items-center justify-between mb-4">
-          <h4 className="text-[17px] font-bold uppercase tracking-tight">90-Day Voyage Map</h4>
-          <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-sm bg-white/5 border border-white/10" />
-                  <span className="text-[9px] font-bold text-white/30 uppercase">Empty</span>
-              </div>
-              <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: habitColor }} />
-                  <span className="text-[9px] font-bold text-white/30 uppercase">Done</span>
-              </div>
-          </div>
-      </div>
-      
-      <div className="flex gap-1 overflow-x-auto pb-2 no-scrollbar">
-          <div className="flex flex-col gap-1 pr-2 pt-5">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                  <span key={i} className="text-[8px] font-black text-white/20 h-2.5 flex items-center">{day}</span>
-              ))}
-          </div>
-          {heatmapWeeks.map((week, wIdx) => (
-              <div key={wIdx} className="flex flex-col gap-1 shrink-0">
-                  {wIdx % 4 === 0 && (
-                      <span className="text-[8px] font-black text-white/30 h-4 flex items-end -mt-4 mb-0.5">
-                          {new Date(week[0].dateStr).toLocaleDateString('en-US', { month: 'short' })}
-                      </span>
-                  )}
-                  {wIdx % 4 !== 0 && <div className="h-4 -mt-4 mb-0.5" />}
-                  {week.map((day) => {
-                      const isDone = day.status === 'done';
-                      const isSkip = day.status === 'skip';
-                      return (
-                          <div 
-                              key={day.dateStr}
-                              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm ${
-                                  day.isFuture ? 'opacity-0' : ''
-                              }`}
-                              style={{ 
-                                  backgroundColor: isDone ? habitColor : isSkip ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255,255,255,0.05)',
-                                  border: isDone ? 'none' : '1px solid rgba(255,255,255,0.05)'
-                              }}
-                              title={`${day.dateStr}: ${day.status}`}
-                          />
-                      );
-                  })}
-              </div>
-          ))}
-      </div>
   </div>
 ));
 
 const WeeklyCompletionChart = React.memo(({ weeklyData, habitColor }: { weeklyData: any[]; habitColor: string }) => (
-  <div className="p-5 sm:p-6 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45]">
+  <div className="p-5 sm:p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-primary)]">
     <div className="flex items-center justify-between mb-6">
         <h4 className="text-[17px] font-bold uppercase tracking-tight">6-Week Completion</h4>
-        <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
-            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Rate %</span>
+        <div className="px-2 py-1 bg-[var(--bg-stats)] rounded-lg border border-[var(--border-primary)]">
+            <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-widest">Rate %</span>
         </div>
     </div>
     <div className="h-48 w-full">
@@ -524,18 +468,18 @@ const WeeklyCompletionChart = React.memo(({ weeklyData, habitColor }: { weeklyDa
                   dataKey="name" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 'bold' }}
+                  tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 'bold' }}
                 />
                 <YAxis hide domain={[0, 100]} />
                 <Tooltip 
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    cursor={{ fill: 'var(--bg-input)' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-neutral-900 border border-white/10 p-3 rounded-xl shadow-2xl">
-                            <p className="text-[10px] font-black uppercase text-white/40 mb-1">{payload[0].payload.name}</p>
+                          <div className="bg-[var(--bg-modal)] border border-[var(--border-primary)] p-3 rounded-xl shadow-2xl">
+                            <p className="text-[10px] font-black uppercase text-[var(--text-dim)] mb-1">{payload[0].payload.name}</p>
                             <p className="text-lg font-black" style={{ color: habitColor }}>{payload[0].value}% Done</p>
-                            <p className="text-[10px] font-bold text-white/60">{payload[0].payload.count} / 7 days</p>
+                            <p className="text-[10px] font-bold text-[var(--text-muted)]">{payload[0].payload.count} / 7 days</p>
                           </div>
                         );
                       }
@@ -553,44 +497,114 @@ const WeeklyCompletionChart = React.memo(({ weeklyData, habitColor }: { weeklyDa
   </div>
 ));
 
-const CalendarCellGrid = React.memo(({ cells, habitColor, onToggle }: { 
-  cells: any[]; 
+const CalendarCellGrid = React.memo(({ logs, habitColor, onToggle }: { 
+  logs: Record<string, string>; 
   habitColor: string; 
   onToggle: (date: string, e: any) => void;
-}) => (
-  <div className="p-5 sm:p-6 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45]">
-    <h4 className="text-[17px] font-medium leading-tight mb-5">Past 6 Weeks</h4>
-    <div className="grid grid-cols-7 gap-2 mb-3">
-      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-        <div key={i} className="text-center text-[10px] font-bold text-white/30 uppercase">{day}</div>
-      ))}
-    </div>
-    <div className="grid grid-cols-7 gap-2 sm:gap-3">
-      {cells.map(cell => {
-        if (cell.type === 'future') {
-          return <div key={cell.id} className="aspect-square rounded-lg bg-transparent" />;
-        }
-        const isDone = cell.status === 'done';
-        const isSkip = cell.status === 'skip';
-        
-        return (
-          <button
-            key={cell.id}
-            onClick={(e) => onToggle(cell.dateStr!, e)}
-            className="aspect-square rounded-lg sm:rounded-xl flex items-center justify-center border active:scale-90 transition-transform"
-            style={{ 
-              backgroundColor: isDone ? habitColor : isSkip ? 'rgba(255,255,255,0.05)' : 'transparent',
-              borderColor: isDone ? habitColor : isSkip ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.1)',
-            }}
-          >
-            {isDone && <Check size={16} strokeWidth={4} className="text-white" />}
-            {isSkip && <Minus size={16} strokeWidth={4} className="text-white/40" />}
+}) => {
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const viewDate = new Date();
+  viewDate.setDate(1);
+  viewDate.setMonth(viewDate.getMonth() + monthOffset);
+
+  const currentMonthYear = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const firstDay = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+  const lastDay = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0);
+
+  const daysInMonth = lastDay.getDate();
+  const startDayOfWeek = firstDay.getDay();
+
+  const days = [];
+  for (let i = 0; i < startDayOfWeek; i++) {
+    days.push({ type: 'empty', id: `empty-start-${i}` });
+  }
+
+  const todayStr = getTodayStr();
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    const tempDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000));
+    const ds = tempDate.toISOString().split('T')[0];
+
+    const isFuture = ds > todayStr;
+    const status = logs[ds] || 'empty';
+    
+    days.push({ 
+      type: isFuture ? 'future' : 'history', 
+      dateStr: ds, 
+      status, 
+      id: `day-${ds}`,
+      dayNum: day
+    });
+  }
+
+  const totalCells = days.length;
+  const paddingNeeded = (7 - (totalCells % 7)) % 7;
+  for(let i = 0; i < paddingNeeded; i++) {
+    days.push({ type: 'empty', id: `empty-end-${i}` });
+  }
+
+  return (
+    <div className="p-5 sm:p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-primary)]">
+      <div className="flex items-center justify-between mb-5">
+        <h4 className="text-[17px] font-medium leading-tight">{currentMonthYear}</h4>
+        <div className="flex gap-2">
+          <button className="p-1 px-2 border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-input)] active:scale-95 text-[var(--text-dim)] hover:text-[var(--text-primary)] transition-colors" onClick={() => setMonthOffset(prev => prev - 1)}>
+            <ChevronLeft size={16} />
           </button>
-        );
-      })}
+          <button className="p-1 px-2 border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-input)] active:scale-95 text-[var(--text-dim)] hover:text-[var(--text-primary)] transition-colors" onClick={() => setMonthOffset(prev => Math.min(prev + 1, 0))} disabled={monthOffset === 0} style={{ opacity: monthOffset === 0 ? 0.3 : 1 }}>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-2 mb-3">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+          <div key={i} className="text-center text-[10px] font-bold text-[var(--text-dim)] uppercase">{day}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-2 sm:gap-3">
+        {days.map(cell => {
+          if (cell.type === 'empty') {
+            return <div key={cell.id} className="aspect-square bg-transparent" />;
+          }
+          if (cell.type === 'future') {
+            return (
+              <div key={cell.id} className="aspect-square rounded-lg sm:rounded-xl flex items-center justify-center border border-[var(--border-primary)] relative" style={{ backgroundColor: 'var(--bg-stats)' }}>
+                <span className="absolute text-[9px] font-medium text-[var(--text-dim)] top-1 left-1.5">{cell.dayNum}</span>
+              </div>
+            );
+          }
+          const isDone = cell.status === 'done';
+          const isSkip = cell.status === 'skip';
+          
+            return (
+            <button
+              key={cell.id}
+              onClick={(e) => onToggle(cell.dateStr!, e)}
+              className="aspect-square rounded-lg sm:rounded-xl flex flex-col items-center justify-center border active:scale-90 transition-transform relative"
+              style={{ 
+                backgroundColor: isDone ? habitColor : isSkip ? 'var(--bg-stats)' : 'transparent',
+                borderColor: isDone ? habitColor : isSkip ? 'var(--border-primary)' : 'var(--border-primary)',
+                opacity: isSkip || !isDone ? 0.7 : 1
+              }}
+            >
+              <span 
+                className="absolute text-[9px] font-bold top-1 left-1.5"
+                style={{ color: isDone ? '#fff' : 'var(--text-muted)' }}
+              >
+                {cell.dayNum}
+              </span>
+              {isDone && <Check size={16} strokeWidth={4} className="text-white mt-2" />}
+              {isSkip && <Minus size={16} strokeWidth={4} className="text-[var(--text-dim)] mt-2" />}
+            </button>
+          );
+        })}
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
 const ToggleSwitch = ({ checked, onChange, themeColor }: { checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, themeColor: string }) => (
   <label className="toggle-switch">
@@ -673,7 +687,7 @@ export default function App() {
   }>(() => {
     const defaultSettings = {
       pureBlack: false,
-      theme: 'VOID' as const,
+      theme: 'BLACK' as const,
       remindersEnabled: true,
       reminderTone: 'chime',
       startedAt: new Date().toISOString(),
@@ -723,8 +737,6 @@ export default function App() {
   const [newFolderId, setNewFolderId] = useState<string | null>(null);
   const [newColor, setNewColor] = useState(ACCENT_COLORS[0]);
   const [newIcon, setNewIcon] = useState<keyof typeof ICON_MAP>('JollyRoger');
-  const [newTags, setNewTags] = useState<string[]>([]);
-  const [newTagInput, setNewTagInput] = useState('');
   const [newReminderTime, setNewReminderTime] = useState('09:00');
   const [newReminderActive, setNewReminderActive] = useState(false);
   const [newReminderDays, setNewReminderDays] = useState<number[]>([]);
@@ -735,8 +747,6 @@ export default function App() {
   const [editFolderId, setEditFolderId] = useState<string | null>(null);
   const [editColor, setEditColor] = useState('');
   const [editIcon, setEditIcon] = useState<keyof typeof ICON_MAP>('JollyRoger');
-  const [editTags, setEditTags] = useState<string[]>([]);
-  const [editTagInput, setEditTagInput] = useState('');
   const [editReminderActive, setEditReminderActive] = useState(false);
   const [editReminderTime, setEditReminderTime] = useState('09:00');
   const [editReminderDays, setEditReminderDays] = useState<number[]>([]);
@@ -817,22 +827,6 @@ export default function App() {
     const totalTrackedDays = Math.max(1, Math.floor((todayParsed - firstParsed) / (1000 * 60 * 60 * 24)) + 1);
     const overallCompletionRate = Math.round((totalDone / totalTrackedDays) * 100);
 
-    // Heatmap
-    const heatmapWeeks = [];
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 90);
-    let currentDate = new Date(startDate);
-    currentDate.setDate(currentDate.getDate() - currentDate.getDay());
-    for (let w = 0; w < 13; w++) {
-        const weekDays = [];
-        for (let d = 0; d < 7; d++) {
-            const ds = currentDate.toISOString().split('T')[0];
-            weekDays.push({ dateStr: ds, status: logs[ds] || 'empty', isFuture: currentDate > today });
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-        heatmapWeeks.push(weekDays);
-    }
-
     // Weekly Chart
     const weeklyData = [];
     for (let i = 5; i >= 0; i--) {
@@ -864,7 +858,7 @@ export default function App() {
         });
     }
 
-    return { cells, totalDone, streak, bestStreak, overallCompletionRate, heatmapWeeks, weeklyData, chartData };
+    return { cells, totalDone, streak, bestStreak, overallCompletionRate, weeklyData, chartData };
   }, [selectedHabit]);
 
   const [lastAction, setLastAction] = useState<{
@@ -911,8 +905,6 @@ export default function App() {
       setEditFolderId(selectedHabit.folderId || null);
       setEditColor(selectedHabit.color);
       setEditIcon(selectedHabit.icon);
-      setEditTags(selectedHabit.tags || []);
-      setEditTagInput('');
       setEditReminderActive(selectedHabit.reminder?.active ?? false);
       setEditReminderTime(selectedHabit.reminder?.time ?? '09:00');
       setEditReminderDays(selectedHabit.reminder?.days ?? []);
@@ -920,6 +912,82 @@ export default function App() {
       setIsEditingDetails(false);
     }
   }, [selectedHabitId]);
+
+  // Global Back Button Interception (Mobile Optimized)
+  const modalStatesRef = useRef({
+    showSettings,
+    showAddModal,
+    selectedHabitId,
+    isSelectionMode,
+    quickActions,
+    habitToDelete,
+    showBulkActionModal,
+    expandedHabitId,
+    activePopover,
+    hasSeenTutorial: settings.hasSeenTutorial
+  });
+
+  useEffect(() => {
+    modalStatesRef.current = {
+      showSettings,
+      showAddModal,
+      selectedHabitId,
+      isSelectionMode,
+      quickActions,
+      habitToDelete,
+      showBulkActionModal,
+      expandedHabitId,
+      activePopover,
+      hasSeenTutorial: settings.hasSeenTutorial
+    };
+  }, [showSettings, showAddModal, selectedHabitId, isSelectionMode, quickActions, habitToDelete, showBulkActionModal, expandedHabitId, activePopover, settings.hasSeenTutorial]);
+
+  useEffect(() => {
+    // Push an initial dummy state to enable popstate interception
+    // We only do this once to avoid flooding the history stack
+    window.history.pushState({ trap: true }, '');
+
+    const handlePopState = () => {
+      // Access the latest state values via Ref
+      const { 
+        showSettings, 
+        showAddModal, 
+        selectedHabitId, 
+        isSelectionMode, 
+        quickActions, 
+        habitToDelete, 
+        showBulkActionModal,
+        expandedHabitId,
+        activePopover,
+        hasSeenTutorial
+      } = modalStatesRef.current;
+
+      let wasSomethingClosed = false;
+
+      if (showSettings) { setShowSettings(false); wasSomethingClosed = true; }
+      if (showAddModal) { setShowAddModal(false); wasSomethingClosed = true; }
+      if (selectedHabitId) { setSelectedHabitId(null); setIsEditingDetails(false); wasSomethingClosed = true; }
+      if (isSelectionMode) { setIsSelectionMode(false); setSelectedIds(new Set()); wasSomethingClosed = true; }
+      if (quickActions) { setQuickActions(null); wasSomethingClosed = true; }
+      if (habitToDelete) { setHabitToDelete(null); wasSomethingClosed = true; }
+      if (showBulkActionModal) { setShowBulkActionModal(false); wasSomethingClosed = true; }
+      if (expandedHabitId) { setExpandedHabitId(null); wasSomethingClosed = true; }
+      if (activePopover) { setActivePopover(null); wasSomethingClosed = true; }
+      
+      // If tutorial is showing, closing it with back button
+      if (hasSeenTutorial === false) { 
+        setSettings(s => ({ ...s, hasSeenTutorial: true })); 
+        wasSomethingClosed = true; 
+      }
+
+      // Always push a new dummy state to trap the NEXT back button press too
+      // This creates a reliable "close modal instead of exit" behavior on mobile
+      window.history.pushState({ trap: true }, '');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const exportData = () => {
     const data = { habits, folders, settings };
@@ -1270,7 +1338,6 @@ const triggerConfetti = (x: number, y: number, color: string) => {
       folderId: newFolderId,
       icon: newIcon,
       color: newColor,
-      tags: newTags,
       history: [],
       logs: {},
       reminder: {
@@ -1285,8 +1352,6 @@ const triggerConfetti = (x: number, y: number, color: string) => {
     // Reset form
     setNewName('');
     setNewIntent('');
-    setNewTags([]);
-    setNewTagInput('');
     setNewCategory(HABIT_CATEGORIES[0]);
     setNewFolderId(null);
     setNewColor(ACCENT_COLORS[0]);
@@ -1307,7 +1372,6 @@ const triggerConfetti = (x: number, y: number, color: string) => {
       folderId: editFolderId,
       color: editColor,
       icon: editIcon,
-      tags: editTags,
       reminder: {
         ...h.reminder,
         active: editReminderActive,
@@ -1421,13 +1485,13 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
   return (
     <div 
-      className="min-h-screen relative text-white font-sans transition-colors duration-500 overflow-hidden bg-theme-bg"
+      className="min-h-screen relative text-[var(--text-primary)] font-sans transition-colors duration-500 overflow-hidden bg-[var(--bg-primary)]"
       style={{ 
-        backgroundColor: settings.pureBlack ? 'var(--tw-color-black)' : 'var(--theme-bg)',
+        backgroundColor: settings.pureBlack ? 'var(--tw-color-black)' : 'var(--bg-primary)',
         '--glass-intensity': settings.glassIntensity / 10,
         '--glass-blur': `${settings.glassBlur}px`,
-        '--theme-accent': (THEMES[settings.theme] || THEMES.VOID).primary,
-        '--theme-accent2': (THEMES[settings.theme] || THEMES.VOID).secondary,
+        '--theme-accent': (THEMES[settings.theme] || THEMES.BLACK).primary,
+        '--theme-accent2': (THEMES[settings.theme] || THEMES.BLACK).secondary,
       } as React.CSSProperties}
     >
       {/* Quick Actions Menu Overlay */}
@@ -1504,11 +1568,11 @@ const triggerConfetti = (x: number, y: number, color: string) => {
       <WatermarkBackground pureBlack={settings.pureBlack} />
 
       <div className="relative z-10 h-full overflow-y-auto w-full hide-scrollbar">
-        <header className="flex items-center justify-between px-[16px] pt-[16px] pb-[8px] max-w-lg mx-auto sticky top-0 bg-[#12121f] z-[40] border-b border-white/5">
+        <header className="flex items-center justify-between px-[16px] pt-[16px] pb-[8px] max-w-lg mx-auto sticky top-0 bg-[var(--bg-header)] z-[40] border-b border-[var(--border-primary)]">
               <motion.h1 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-[20px] font-[900] tracking-[-0.5px] text-white"
+                className="text-[20px] font-[900] tracking-[-0.5px] text-[var(--text-primary)]"
               >
                 GRAND LINE.
               </motion.h1>
@@ -1519,7 +1583,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     setSelectedIds(new Set());
                     playSound('bell');
                   }}
-                  className={`flex items-center justify-center w-[34px] h-[34px] rounded-full text-white border-none transition-all shadow-lg ${isSelectionMode ? 'bg-amber-500 scale-105' : 'bg-white/5 hover:bg-white/10'}`}
+                  className={`flex items-center justify-center w-[34px] h-[34px] rounded-full border-none transition-all shadow-lg text-[var(--text-primary)] ${isSelectionMode ? 'bg-amber-500 scale-105' : 'bg-[var(--bg-input)] hover:bg-[var(--border-primary)]'}`}
                 >
                   <Layers size={16} strokeWidth={isSelectionMode ? 3 : 2} />
                 </button>
@@ -1529,8 +1593,11 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     playSound('bell');
                     setShowAddModal(true);
                   }}
-                  className="flex items-center justify-center w-[34px] h-[34px] rounded-full text-white border-none transition-transform hover:scale-105 active:scale-95 shadow-lg"
-                  style={{ backgroundColor: (THEMES[settings.theme] || THEMES.VOID).primary }}
+                  className="flex items-center justify-center w-[34px] h-[34px] rounded-full border-none transition-transform hover:scale-105 active:scale-95 shadow-lg"
+                  style={{ 
+                    backgroundColor: (THEMES[settings.theme] || THEMES.BLACK).primary,
+                    color: settings.theme === 'BLACK' ? '#000000' : '#ffffff'
+                  }}
                 >
                   <Plus size={18} strokeWidth={3} />
                 </button>
@@ -1541,7 +1608,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     playSound('bell');
                     setShowSettings(true);
                   }}
-                  className="w-[34px] h-[34px] rounded-[10px] bg-white/[0.08] flex items-center justify-center shrink-0 text-white/70 hover:bg-white/20 transition-colors"
+                  className="w-[34px] h-[34px] rounded-[10px] bg-[var(--bg-input)] flex items-center justify-center shrink-0 text-[var(--text-primary)] hover:bg-[var(--border-primary)] transition-colors"
                 >
                   <Settings size={16} />
                 </motion.button>
@@ -1552,20 +1619,20 @@ const triggerConfetti = (x: number, y: number, color: string) => {
           {/* Date + Progress Row */}
           <div className="mb-4">
             <div className="flex justify-between items-end mb-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-dim)]">
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </span>
-              <span className="text-[10px] font-black text-white/80">
+              <span className="text-[10px] font-black text-[var(--text-muted)]">
                 {habits.filter(h => h.logs?.[getTodayStr()] === 'done').length}/{habits.length} quests complete
               </span>
             </div>
-            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden shadow-inner">
+            <div className="w-full h-1.5 bg-[var(--bg-input)] rounded-full overflow-hidden shadow-inner">
                <motion.div 
                  initial={{ width: 0 }}
                  animate={{ width: `${(habits.filter(h => h.logs?.[getTodayStr()] === 'done').length / Math.max(1, habits.length)) * 100}%` }}
                  className="h-full transition-all duration-1000 ease-out"
                  style={{ 
-                   background: `linear-gradient(90deg, ${(THEMES[settings.theme] || THEMES.VOID).primary}, ${(THEMES[settings.theme] || THEMES.VOID).secondary})` 
+                   background: `linear-gradient(90deg, ${(THEMES[settings.theme] || THEMES.BLACK).primary}, ${(THEMES[settings.theme] || THEMES.BLACK).secondary})` 
                  }}
                />
             </div>
@@ -1578,9 +1645,9 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               { label: 'Today', value: habits.filter(h => h.logs?.[getTodayStr()] === 'done').length },
               { label: 'Streak', value: Math.max(0, ...habits.map(h => calculateStreak(h)), 0) }
             ].map((stat, i) => (
-              <div key={i} className="p-2 bg-white/5 border border-white/10 rounded-lg">
-                <p className="text-[8px] font-bold text-white/30 uppercase tracking-[0.05em] mb-0.5">{stat.label}</p>
-                <p className="text-base font-black text-white leading-none tracking-tight">{stat.value}</p>
+              <div key={i} className="p-2 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-lg">
+                <p className="text-[8px] font-bold text-[var(--text-dim)] uppercase tracking-[0.05em] mb-0.5">{stat.label}</p>
+                <p className="text-base font-black text-[var(--text-primary)] leading-none tracking-tight">{stat.value}</p>
               </div>
             ))}
           </div>
@@ -1600,10 +1667,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     return (
                       <div key={folder.id} className="space-y-4">
                         <div className="flex items-center gap-3 px-1">
-                           <Folder size={16} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
-                           <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-white/80">{folder.name}</h3>
-                           <div className="h-px flex-1 bg-white/5" />
-                           <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{habitsInFolder.length} Quests</span>
+                           <Folder size={16} style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }} />
+                           <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">{folder.name}</h3>
+                           <div className="h-px flex-1 bg-[var(--border-primary)]" />
+                           <span className="text-[10px] font-bold text-[var(--text-dim)] uppercase tracking-widest">{habitsInFolder.length} Quests</span>
                         </div>
                         <div className="space-y-[10px]">
                            {habitsInFolder.map((h, i) => (
@@ -1635,7 +1702,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                          <div className="flex items-center gap-3 px-1">
                             <Layers size={16} className="text-white/20" />
                             <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-white/30">Free Sails</h3>
-                            <div className="h-px flex-1 bg-white/5" />
+                            <div className="h-px flex-1 bg-[var(--border-primary)]" />
                          </div>
                       )}
                       <div className="space-y-[10px]">
@@ -1700,7 +1767,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             exit={{ y: 20, opacity: 0, scale: 0.95 }}
             className="fixed bottom-6 left-4 right-4 z-[90] max-w-lg mx-auto"
           >
-            <div className="p-3 px-4 rounded-3xl border border-white/20 bg-neutral-900 shadow-2xl flex items-center justify-between gap-2">
+            <div className="p-3 px-4 rounded-3xl border border-[var(--border-primary)] bg-[var(--bg-modal)] shadow-2xl flex items-center justify-between gap-2">
               <div className="flex items-center pl-1 shrink max-w-[80px] sm:max-w-none w-min sm:w-auto">
                 <div className="flex flex-col">
                   <span className="text-[12px] sm:text-[13px] font-black text-white leading-tight">{selectedIds.size} ritual{selectedIds.size > 1 ? 's' : ''}</span>
@@ -1714,17 +1781,17 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     setBulkActionType('status');
                     setShowBulkActionModal(true);
                   }}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white/70"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-[var(--bg-input)] hover:bg-[var(--border-primary)] flex items-center justify-center transition-colors text-[var(--text-muted)]"
                 >
                   <Check size={16} />
                 </button>
-                <div className="w-px h-6 bg-white/10 mx-0.5" />
+                <div className="w-px h-6 bg-[var(--border-primary)] mx-0.5" />
                 <button
                   onClick={() => {
                     setBulkActionType('folder');
                     setShowBulkActionModal(true);
                   }}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white/70"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-[var(--bg-input)] hover:bg-[var(--border-primary)] flex items-center justify-center transition-colors text-[var(--text-muted)]"
                 >
                   <Folder size={16} />
                 </button>
@@ -1733,7 +1800,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     setBulkActionType('category');
                     setShowBulkActionModal(true);
                   }}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-white/70"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-[10px] sm:rounded-2xl bg-[var(--bg-input)] hover:bg-[var(--border-primary)] flex items-center justify-center transition-colors text-[var(--text-muted)]"
                 >
                   <Layers size={16} />
                 </button>
@@ -1775,18 +1842,18 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="relative pointer-events-auto w-full max-w-sm max-h-[90vh] overflow-y-auto no-scrollbar bg-[#1e1e2e] border border-[#2a2a45] p-5 rounded-[32px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col"
+              className="relative pointer-events-auto w-full max-w-sm max-h-[90vh] overflow-y-auto no-scrollbar bg-[var(--bg-modal)] border border-[var(--border-primary)] p-5 rounded-[32px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col"
             >
               <div className="flex flex-col items-center text-center">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${bulkActionType === 'delete' ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>
                   {bulkActionType === 'delete' ? <Skull size={20} /> : bulkActionType === 'folder' ? <Folder size={20} /> : bulkActionType === 'status' ? <Check size={20} /> : <Layers size={20} />}
                 </div>
                 
-                <h3 className="text-[18px] font-black text-white mb-1.5 leading-tight">
+                <h3 className="text-[18px] font-black text-[var(--text-primary)] mb-1.5 leading-tight">
                   {bulkActionType === 'delete' ? 'Confirm Purge' : bulkActionType === 'folder' ? 'Assign Fleet' : bulkActionType === 'status' ? 'Update Status' : 'Recategorize'}
                 </h3>
                 
-                <p className="text-[13px] font-medium text-white/60 mb-5 leading-snug">
+                <p className="text-[13px] font-medium text-[var(--text-muted)] mb-5 leading-snug">
                   {bulkActionType === 'delete' 
                     ? `Are you certain you wish to purge these ${selectedIds.size} rituals from your logbook? This cannot be undone.` 
                     : bulkActionType === 'status'
@@ -1799,7 +1866,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     <div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto no-scrollbar">
                       <button
                         onClick={() => setBulkTargetFolderId(null)}
-                        className={`p-2.5 rounded-2xl border text-center transition-all text-[11px] font-black uppercase tracking-widest ${bulkTargetFolderId === null ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                        className={`p-2.5 rounded-2xl border text-center transition-all text-[11px] font-black uppercase tracking-widest ${bulkTargetFolderId === null ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-[var(--border-primary)] bg-[var(--bg-input)] text-[var(--text-dim)] hover:bg-[var(--border-primary)]'}`}
                       >
                         Unassigned
                       </button>
@@ -1807,7 +1874,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                         <button
                           key={f.id}
                           onClick={() => setBulkTargetFolderId(f.id)}
-                          className={`p-2.5 rounded-2xl border text-center transition-all text-[11px] font-black uppercase tracking-widest ${bulkTargetFolderId === f.id ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                          className={`p-2.5 rounded-2xl border text-center transition-all text-[11px] font-black uppercase tracking-widest ${bulkTargetFolderId === f.id ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-[var(--border-primary)] bg-[var(--bg-input)] text-[var(--text-dim)] hover:bg-[var(--border-primary)]'}`}
                         >
                           {f.name}
                         </button>
@@ -1823,7 +1890,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                         <button
                           key={c}
                           onClick={() => setBulkTargetCategory(c)}
-                          className={`py-2 px-3 rounded-[14px] border text-center transition-all text-[10px] font-black uppercase tracking-widest ${bulkTargetCategory === c ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                          className={`py-2 px-3 rounded-[14px] border text-center transition-all text-[10px] font-black uppercase tracking-widest ${bulkTargetCategory === c ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-[var(--border-primary)] bg-[var(--bg-input)] text-[var(--text-dim)] hover:bg-[var(--border-primary)]'}`}
                         >
                           {c}
                         </button>
@@ -1837,21 +1904,21 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     <div className="grid grid-cols-3 gap-2">
                       <button
                         onClick={() => setBulkTargetStatus('done')}
-                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'done' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'done' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-[var(--border-primary)] bg-[var(--bg-input)] text-[var(--text-dim)] hover:bg-[var(--border-primary)]'}`}
                       >
                         <Check size={16} />
                         Done
                       </button>
                       <button
                         onClick={() => setBulkTargetStatus('skip')}
-                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'skip' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'skip' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-[var(--border-primary)] bg-[var(--bg-input)] text-[var(--text-dim)] hover:bg-[var(--border-primary)]'}`}
                       >
                         <Minus size={16} />
                         Skip
                       </button>
                       <button
                         onClick={() => setBulkTargetStatus('empty')}
-                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'empty' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-white/10 bg-white/5 text-white/50 hover:bg-white/10'}`}
+                        className={`py-2 px-2 rounded-[14px] border text-center transition-all flex flex-col items-center gap-1 text-[10px] font-black uppercase tracking-widest ${bulkTargetStatus === 'empty' ? 'border-amber-500 bg-amber-500/10 text-amber-500' : 'border-[var(--border-primary)] bg-[var(--bg-input)] text-[var(--text-dim)] hover:bg-[var(--border-primary)]'}`}
                       >
                         <RotateCcw size={16} />
                         Clear
@@ -1863,7 +1930,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 <div className="flex gap-2 w-full mt-auto">
                   <button
                     onClick={() => setShowBulkActionModal(false)}
-                    className="flex-1 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-[11px] font-black uppercase tracking-widest text-white/70 transition-colors"
+                    className="flex-1 py-3 rounded-2xl bg-[var(--bg-input)] hover:bg-[var(--border-primary)] text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] transition-colors"
                   >
                     Hold On
                   </button>
@@ -1889,12 +1956,12 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             exit={{ opacity: 0, y: 100, x: '-50%' }}
             className="fixed bottom-10 left-1/2 z-50 pointer-events-auto"
           >
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-neutral-900 border border-white/20 shadow-2xl">
-              <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">Action Recorded</span>
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-[var(--bg-modal)] border border-[var(--border-primary)] shadow-2xl">
+              <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Action Recorded</span>
               <button 
                 onClick={undoAction}
                 className="px-3 py-1.5 rounded-lg bg-theme-accent text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-1.5"
-                style={{ backgroundColor: (THEMES[settings.theme] || THEMES.VOID).primary }}
+                style={{ backgroundColor: (THEMES[settings.theme] || THEMES.BLACK).primary }}
               >
                 <RotateCcw size={12} />
                  Undo
@@ -1914,22 +1981,22 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] w-full text-white overflow-y-auto overflow-x-hidden no-scrollbar modal"
-            style={{ backgroundColor: '#0f0f14', WebkitOverflowScrolling: 'touch' }}
+            className="fixed inset-0 z-[100] w-full text-[var(--text-primary)] overflow-y-auto overflow-x-hidden no-scrollbar modal"
+            style={{ backgroundColor: 'var(--bg-primary)', WebkitOverflowScrolling: 'touch' }}
           >
             <WatermarkBackground pureBlack={settings.pureBlack} />
             {/* Header */}
-            <div className="px-4 py-4 flex items-center gap-4 bg-[#12121f] sticky top-0 z-20 border-b border-white/5">
+            <div className="px-4 py-4 flex items-center gap-4 bg-[var(--bg-header)] sticky top-0 z-20 border-b border-[var(--border-primary)]">
               <button 
                 onClick={() => setShowSettings(false)}
-                className="p-2 -ml-2 text-white hover:text-white/80 transition-colors"
+                className="p-2 -ml-2 text-[var(--text-primary)] hover:text-[var(--text-muted)] transition-colors"
               >
                 <motion.svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="19" y1="12" x2="5" y2="12"></line>
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </motion.svg>
               </button>
-              <h2 className="text-xl font-bold tracking-wide text-white">Settings</h2>
+              <h2 className="text-xl font-bold tracking-wide text-[var(--text-primary)]">Settings</h2>
             </div>
 
             <div className="px-4 py-6 pb-32 max-w-2xl mx-auto space-y-12">
@@ -1937,16 +2004,16 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               {/* Appearance Section */}
               <section>
                 <div className="flex items-center gap-2 mb-6 ml-2">
-                  <Palette size={18} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
-                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }}>Appearance</h3>
+                  <Palette size={18} style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }} />
+                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }}>Appearance</h3>
                 </div>
                 
-                <div className="p-6 rounded-[32px] border border-white/15 bg-white/[0.05] shadow-2xl space-y-8">
+                <div className="p-6 rounded-[32px] border border-[var(--border-primary)] bg-[var(--bg-card)] shadow-2xl space-y-8">
                   {/* Theme Palette */}
                   <div>
                     <div className="mb-5 ml-1">
-                       <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Theme Palette</h4>
-                       <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Choose a global aesthetic theme.</p>
+                      <h4 className="text-[18px] font-bold leading-tight text-[var(--text-primary)]">Theme Palette</h4>
+                      <p className="text-[14px] mt-1 leading-snug font-medium text-[var(--text-muted)]">Choose a global aesthetic theme.</p>
                     </div>
                     
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
@@ -1960,8 +2027,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             className={`relative h-[90px] rounded-[14px] overflow-hidden text-left focus:outline-none transition-all duration-300 ${isActive ? 'scale-105 z-10' : 'scale-100'}`}
                             style={{
                               background: gradient,
-                              border: isActive ? '2px solid #ffffff' : '2px solid rgba(255,255,255,0.15)',
-                              boxShadow: isActive ? `0 0 20px rgba(255,255,255,0.2), 0 0 40px ${accent}4d` : 'none',
+                              border: isActive ? `2px solid ${(THEMES[settings.theme] || THEMES.BLACK).primary}` : '2px solid var(--border-primary)',
+                              boxShadow: isActive ? `0 0 20px rgba(255,255,255,0.1), 0 0 40px ${accent}2d` : 'none',
                               padding: '16px'
                             }}
                           >
@@ -1973,11 +2040,11 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             </div>
 
                             <span 
-                              className="absolute bottom-[10px] left-[10px] right-[24px] text-[10px] sm:text-[11px] font-[800] tracking-[1.5px] uppercase truncate"
+                              className="absolute bottom-[10px] left-[10px] right-[32px] text-[10px] sm:text-[11px] font-[900] tracking-[1.5px] uppercase truncate"
                               style={{ 
                                 color: '#ffffff',
                                 WebkitTextFillColor: '#ffffff',
-                                textShadow: '0 1px 4px rgba(0,0,0,0.8)'
+                                textShadow: '0 1px 4px rgba(0,0,0,0.4)'
                               }}
                             >
                               {name}
@@ -1999,27 +2066,27 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     </div>
                   </div>
 
-                  <div className="h-px bg-white/5" />
+                  <div className="h-px bg-[var(--border-primary)]" />
 
                   {/* Pure Black Toggle */}
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>True Noir Mode</h4>
-                      <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Use pure OLED black for backgrounds. Saves battery and increases contrast.</p>
+                      <h4 className="text-[18px] font-bold leading-tight text-[var(--text-primary)]">True Noir Mode</h4>
+                      <p className="text-[14px] mt-1 leading-snug font-medium text-[var(--text-muted)]">Use pure OLED black for backgrounds. Saves battery and increases contrast.</p>
                     </div>
                     <ToggleSwitch 
                       checked={settings.pureBlack} 
                       onChange={(e) => setSettings(s => ({ ...s, pureBlack: e.target.checked }))} 
-                      themeColor={(THEMES[settings.theme] || THEMES.VOID).primary} 
+                      themeColor={(THEMES[settings.theme] || THEMES.BLACK).primary} 
                     />
                   </div>
 
-                <div className="h-px bg-white/5" />
+                <div className="h-px bg-[var(--border-primary)]" />
 
                 {/* Rolling Window */}
                 <div>
-                  <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Tracking Horizon</h4>
-                    <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Number of days visible in your rolling window.</p>
+                  <h4 className="text-[18px] font-bold leading-tight text-[var(--text-primary)]">Tracking Horizon</h4>
+                    <p className="text-[14px] mt-1 leading-snug font-medium text-[var(--text-muted)]">Number of days visible in your rolling window.</p>
                     <div className="flex items-center gap-4 mt-6">
                       <input
                         type="range"
@@ -2030,12 +2097,12 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                         onChange={(e) => setSettings(s => ({ ...s, rollingWindowDays: parseInt(e.target.value) }))}
                         className="glass-slider flex-1"
                         style={{ 
-                          background: `linear-gradient(90deg, ${(THEMES[settings.theme] || THEMES.VOID).primary} ${((settings.rollingWindowDays - 3) / 11) * 100}%, rgba(255,255,255,0.1) ${((settings.rollingWindowDays - 3) / 11) * 100}%)`
+                          background: `linear-gradient(90deg, ${(THEMES[settings.theme] || THEMES.BLACK).primary} ${((settings.rollingWindowDays - 3) / 11) * 100}%, var(--bg-input) ${((settings.rollingWindowDays - 3) / 11) * 100}%)`
                         }}
                       />
-                      <span className="w-8 text-center text-white font-black text-sm">{settings.rollingWindowDays}</span>
+                      <span className="w-8 text-center text-[var(--text-primary)] font-black text-sm">{settings.rollingWindowDays}</span>
                     </div>
-                    <div className="flex justify-between text-[10px] font-bold text-white/30 mt-3 tracking-widest uppercase">
+                    <div className="flex justify-between text-[10px] font-bold text-[var(--text-dim)] mt-3 tracking-widest uppercase">
                       <span>Focused</span>
                       <span>Panorama</span>
                     </div>
@@ -2046,15 +2113,15 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               {/* Reminders Section */}
               <section>
                 <div className="flex items-center gap-2 mb-6 ml-2">
-                  <Bell size={18} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
-                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }}>Reminders</h3>
+                  <Bell size={18} style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }} />
+                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }}>Reminders</h3>
                 </div>
                 
-                <div className="p-6 rounded-[32px] border border-white/15 bg-white/[0.05] shadow-2xl space-y-6">
+                <div className="p-6 rounded-[32px] border border-[var(--border-primary)] bg-[var(--bg-card)] shadow-2xl space-y-6">
                   <div className="flex items-center justify-between gap-4 px-1">
                     <div className="pr-4">
-                      <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Global Notifications</h4>
-                      <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>Enable or disable all quest reminders globally.</p>
+                      <h4 className="text-[18px] font-bold leading-tight text-[var(--text-primary)]">Global Notifications</h4>
+                      <p className="text-[14px] mt-1 leading-snug font-medium text-[var(--text-muted)]">Enable or disable all quest reminders globally.</p>
                     </div>
                     <ToggleSwitch 
                       checked={settings.remindersEnabled} 
@@ -2069,16 +2136,16 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           }
                         }
                       }} 
-                      themeColor={(THEMES[settings.theme] || THEMES.VOID).primary} 
+                      themeColor={(THEMES[settings.theme] || THEMES.BLACK).primary} 
                     />
                   </div>
                   
                   {settings.remindersEnabled && (
-                    <div className="flex flex-col gap-3 px-1 pt-4 border-t border-white/10">
+                    <div className="flex flex-col gap-3 px-1 pt-4 border-t border-[var(--border-primary)]">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="text-[16px] text-white font-bold leading-tight">Reminder Tone</h4>
-                          <p className="text-white/60 text-[13px] mt-1 leading-snug">Choose the gentle sound that will play.</p>
+                          <h4 className="text-[16px] text-[var(--text-primary)] font-bold leading-tight">Reminder Tone</h4>
+                          <p className="text-[var(--text-muted)] text-[13px] mt-1 leading-snug">Choose the gentle sound that will play.</p>
                         </div>
                         <div className="relative">
                            <select
@@ -2087,15 +2154,15 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                               setSettings(s => ({ ...s, reminderTone: e.target.value }));
                               playSound(e.target.value);
                             }}
-                            className="appearance-none bg-white/5 border border-white/10 text-white text-[13px] font-bold px-4 py-2 pr-8 rounded-xl outline-none focus:border-white/30 cursor-pointer"
+                            className="appearance-none bg-[var(--bg-input)] border border-[var(--border-primary)] text-[var(--text-primary)] text-[13px] font-bold px-4 py-2 pr-8 rounded-xl outline-none focus:border-[var(--border-primary)] cursor-pointer"
                            >
                               {NOTIFICATION_TONES.map(tone => (
-                                <option key={tone.id} value={tone.id} className="bg-neutral-900 text-white">
+                                <option key={tone.id} value={tone.id} className="bg-[var(--bg-modal)] text-[var(--text-primary)]">
                                   {tone.label}
                                 </option>
                               ))}
                            </select>
-                           <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                           <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-dim)]">
                              <ChevronDown size={14} />
                            </div>
                         </div>
@@ -2103,11 +2170,11 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     </div>
                   )}
                   
-                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/40 shrink-0">
+                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-[var(--bg-stats)] border border-[var(--border-primary)]">
+                    <div className="w-8 h-8 rounded-full bg-[var(--bg-input)] flex items-center justify-center text-[var(--text-dim)] shrink-0">
                       <Info size={16} />
                     </div>
-                    <p className="text-[13px] text-white/50 leading-snug">Individual quest reminders can still be tuned in the quest's editor.</p>
+                    <p className="text-[13px] text-[var(--text-muted)] leading-snug">Individual quest reminders can still be tuned in the quest's editor.</p>
                   </div>
                 </div>
               </section>
@@ -2115,20 +2182,20 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               {/* Journey Info Section */}
               <section>
                 <div className="flex items-center gap-2 mb-6 ml-2">
-                  <Compass size={18} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
-                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }}>Journey Insight</h3>
+                  <Compass size={18} style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }} />
+                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }}>Journey Insight</h3>
                 </div>
                 
-                <div className="p-6 rounded-[32px] border border-white/15 bg-white/[0.05] shadow-2xl space-y-6">
+                <div className="p-6 rounded-[32px] border border-[var(--border-primary)] bg-[var(--bg-card)] shadow-2xl space-y-6">
                   <div className="flex flex-col gap-4 px-1">
                     <div>
-                      <h4 className="text-[18px] text-white font-bold leading-tight" style={{ color: '#ffffff' }}>Ship's Inauguration</h4>
-                      <p className="text-white text-[14px] mt-1 leading-snug font-medium" style={{ color: '#ffffff' }}>The exact moment you set sail on this voyage.</p>
+                      <h4 className="text-[18px] font-bold leading-tight text-[var(--text-primary)]">Ship's Inauguration</h4>
+                      <p className="text-[14px] mt-1 leading-snug font-medium text-[var(--text-muted)]">The exact moment you set sail on this voyage.</p>
                       
                       <div className="mt-4 flex flex-wrap items-center gap-3">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
-                          <Calendar size={14} className="text-white/40" />
-                          <span className="text-[13px] font-bold text-white/80">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg-stats)] border border-[var(--border-primary)]">
+                          <Calendar size={14} className="text-[var(--text-dim)]" />
+                          <span className="text-[13px] font-bold text-[var(--text-muted)]">
                             {(() => {
                               const d = new Date(settings.startedAt);
                               if (isNaN(d.getTime())) return 'Invalid Date';
@@ -2163,7 +2230,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           />
                           <button 
                             type="button"
-                            className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black uppercase tracking-widest text-white/40 group-hover:bg-white/10 transition-colors relative z-0 w-full h-full"
+                            className="px-3 py-1.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] group-hover:bg-[var(--border-primary)] transition-colors relative z-0 w-full h-full"
                           >
                             Modify
                           </button>
@@ -2171,7 +2238,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                         
                         <button 
                           onClick={() => setSettings(s => ({ ...s, startedAt: new Date().toISOString() }))}
-                          className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[11px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 transition-colors"
+                          className="px-3 py-1.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:bg-[var(--border-primary)] transition-colors"
                         >
                           Reset
                         </button>
@@ -2184,35 +2251,35 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                {/* Data Management Section */}
               <section>
                 <div className="flex items-center gap-2 mb-6 ml-2">
-                  <Database size={18} style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }} />
-                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.VOID).primary }}>Data Management</h3>
+                  <Database size={18} style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }} />
+                  <h3 className="text-[11px] font-black uppercase tracking-[2px] mt-0.5" style={{ color: (THEMES[settings.theme] || THEMES.BLACK).primary }}>Data Management</h3>
                 </div>
                 
-                <div className="p-6 rounded-[32px] border border-white/15 bg-white/[0.05] shadow-2xl space-y-4">
+                <div className="p-6 rounded-[32px] border border-[var(--border-primary)] bg-[var(--bg-card)] shadow-2xl space-y-4">
                   <button 
                     onClick={exportData}
-                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group"
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-[var(--bg-input)] hover:bg-[var(--border-primary)] transition-all border border-[var(--border-primary)] group"
                   >
                     <div className="flex items-center gap-3">
                       <Download size={18} className="text-emerald-400" />
                       <div className="text-left">
-                        <span className="block text-[15px] font-bold text-white" style={{ color: '#ffffff' }}>Export Backup</span>
-                        <span className="block text-[12px] text-white font-medium" style={{ color: '#ffffff' }}>Save your data to a JSON file.</span>
+                        <span className="block text-[15px] font-bold text-[var(--text-primary)]">Export Backup</span>
+                        <span className="block text-[12px] text-[var(--text-muted)] font-medium">Save your data to a JSON file.</span>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-white/20 group-hover:text-white/60 transition-colors" />
+                    <ChevronRight size={16} className="text-[var(--text-dim)] group-hover:text-[var(--text-muted)] transition-colors" />
                   </button>
  
-                  <label className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group cursor-pointer">
+                  <label className="w-full flex items-center justify-between p-4 rounded-2xl bg-[var(--bg-input)] hover:bg-[var(--border-primary)] transition-all border border-[var(--border-primary)] group cursor-pointer">
                     <div className="flex items-center gap-3">
                       <Upload size={18} className="text-blue-400" />
                       <div className="text-left">
-                        <span className="block text-[15px] font-bold text-white" style={{ color: '#ffffff' }}>Import Backup</span>
-                        <span className="block text-[12px] text-white font-medium" style={{ color: '#ffffff' }}>Restore from a previous backup file.</span>
+                        <span className="block text-[15px] font-bold text-[var(--text-primary)]">Import Backup</span>
+                        <span className="block text-[12px] text-[var(--text-muted)] font-medium">Restore from a previous backup file.</span>
                       </div>
                     </div>
                     <input type="file" accept=".json" onChange={importData} className="hidden" />
-                    <ChevronRight size={16} className="text-white/20 group-hover:text-white/60 transition-colors" />
+                    <ChevronRight size={16} className="text-[var(--text-dim)] group-hover:text-[var(--text-muted)] transition-colors" />
                   </label>
  
                   <button 
@@ -2221,16 +2288,16 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                       setCurrentTutorialStep(0);
                       setSettings(s => ({ ...s, hasSeenTutorial: false }));
                     }}
-                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/10 group cursor-pointer"
+                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-[var(--bg-input)] hover:bg-[var(--border-primary)] transition-all border border-[var(--border-primary)] group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <Compass size={18} className="text-amber-400" />
                       <div className="text-left">
-                        <span className="block text-[15px] font-bold text-white" style={{ color: '#ffffff' }}>Replay Tutorial</span>
-                        <span className="block text-[12px] text-white font-medium" style={{ color: '#ffffff' }}>View the onboarding guide again.</span>
+                        <span className="block text-[15px] font-bold text-[var(--text-primary)]">Replay Tutorial</span>
+                        <span className="block text-[12px] text-[var(--text-muted)] font-medium">View the onboarding guide again.</span>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="text-white/20 group-hover:text-white/60 transition-colors" />
+                    <ChevronRight size={16} className="text-[var(--text-dim)] group-hover:text-[var(--text-muted)] transition-colors" />
                   </button>
 
                   <button 
@@ -2264,16 +2331,16 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] text-white overflow-y-auto no-scrollbar modal"
+            className="fixed inset-0 z-[100] text-[var(--text-primary)] overflow-y-auto no-scrollbar modal"
             style={{ backgroundColor: 'var(--bg-primary)', WebkitOverflowScrolling: 'touch' }}
           >
             <WatermarkBackground pureBlack={settings.pureBlack} />
             {/* Header */}
-            <div className="px-5 py-3 flex items-center justify-between gap-4 bg-[#12121f] sticky top-0 z-20 border-b border-white/5">
+            <div className="px-5 py-3 flex items-center justify-between gap-4 bg-[var(--bg-header)] sticky top-0 z-20 border-b border-[var(--border-primary)]">
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => setShowAddModal(false)}
-                  className="p-1.5 -ml-2 text-white hover:text-white transition-colors"
+                  className="p-1.5 -ml-2 text-[var(--text-primary)] hover:text-[var(--text-muted)] transition-colors"
                 >
                   <motion.svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -2281,8 +2348,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                   </motion.svg>
                 </button>
                 <div className="flex items-center gap-2">
-                  <Anchor size={20} className="text-white drop-shadow-md" />
-                  <h2 className="text-lg font-bold tracking-tight text-white">New Quest</h2>
+                  <Anchor size={20} className="text-[var(--text-primary)] drop-shadow-md" />
+                  <h2 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">New Quest</h2>
                 </div>
               </div>
               <button
@@ -2290,8 +2357,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 disabled={!newName.trim()}
                 className="text-[13px] font-black uppercase tracking-[0.1em] px-4 py-1.5 rounded-full disabled:opacity-20 transition-all active:scale-95"
                 style={{ 
-                  backgroundColor: `${(THEMES[settings.theme] || THEMES.VOID).primary}CC`,
-                  color: '#ffffff'
+                  backgroundColor: (THEMES[settings.theme] || THEMES.BLACK).primary,
+                  color: settings.theme === 'BLACK' ? '#000000' : '#ffffff'
                 }}
               >
                 SET SAIL!
@@ -2302,8 +2369,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             <div className="px-4 py-8 pb-40 max-w-lg mx-auto space-y-6">
               
               {/* Identity & Intent */}
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg">
-                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
+              <section className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl p-4 shadow-lg">
+                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-[var(--text-dim)] pl-1 flex items-center gap-2">
                   <Star size={12} /> Identity & Intent
                 </h3>
                 <div className="space-y-3">
@@ -2314,9 +2381,9 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     onFocus={() => setActiveInput('name')}
                     onBlur={() => setActiveInput(null)}
                     placeholder="Quest Title (e.g., Morning Meditation)"
-                    className="w-full bg-black/40 border-2 px-4 py-3 rounded-xl text-[15px] font-bold text-white placeholder:text-white/30 focus:outline-none transition-all"
+                    className="w-full bg-[var(--bg-input)] border-2 px-4 py-3 rounded-xl text-[15px] font-bold text-[var(--text-primary)] placeholder:text-[var(--text-dim)] focus:outline-none transition-all"
                     style={{ 
-                      borderColor: activeInput === 'name' ? newColor : 'rgba(255,255,255,0.05)',
+                      borderColor: activeInput === 'name' ? newColor : 'var(--border-primary)',
                       boxShadow: activeInput === 'name' ? `0 0 12px ${newColor}20` : 'none'
                     }}
                   />
@@ -2328,67 +2395,23 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     onFocus={() => setActiveInput('intent')}
                     onBlur={() => setActiveInput(null)}
                     placeholder="Why does this matter?"
-                    className="w-full bg-black/40 border-2 px-4 py-3 rounded-xl text-[13px] font-medium text-white placeholder:text-white/30 placeholder:italic focus:outline-none transition-all"
+                    className="w-full bg-[var(--bg-input)] border-2 px-4 py-3 rounded-xl text-[13px] font-medium text-[var(--text-primary)] placeholder:text-[var(--text-dim)] placeholder:italic focus:outline-none transition-all"
                     style={{ 
-                      borderColor: activeInput === 'intent' ? newColor : 'rgba(255,255,255,0.05)',
+                      borderColor: activeInput === 'intent' ? newColor : 'var(--border-primary)',
                       boxShadow: activeInput === 'intent' ? `0 0 12px ${newColor}20` : 'none'
                     }}
                   />
-
-                  {/* Tags Input */}
-                  <div className="pt-2">
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {newTags.map(tag => (
-                        <span key={tag} className="px-2 py-1 bg-white/10 rounded-full text-[10px] font-bold text-white flex items-center gap-1 border border-white/10">
-                          #{tag}
-                          <button onClick={() => setNewTags(prev => prev.filter(t => t !== tag))} className="text-white/40 hover:text-white">
-                            <X size={10} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <input 
-                      type="text" 
-                      value={newTagInput}
-                      onChange={(e) => setNewTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ',') {
-                          e.preventDefault();
-                          const val = newTagInput.trim().replace(/^#/, '');
-                          if (val && !newTags.includes(val)) {
-                            setNewTags(prev => [...prev, val]);
-                          }
-                          setNewTagInput('');
-                        }
-                      }}
-                      onFocus={() => setActiveInput('tags')}
-                      onBlur={() => {
-                        setActiveInput(null);
-                        const val = newTagInput.trim().replace(/^#/, '');
-                        if (val && !newTags.includes(val)) {
-                          setNewTags(prev => [...prev, val]);
-                        }
-                        setNewTagInput('');
-                      }}
-                      placeholder="Add tags (press Enter to add)"
-                      className="w-full bg-black/40 border-2 px-4 py-3 rounded-xl text-[13px] font-medium text-white placeholder:text-white/30 focus:outline-none transition-all"
-                      style={{ 
-                        borderColor: activeInput === 'tags' ? newColor : 'rgba(255,255,255,0.05)',
-                        boxShadow: activeInput === 'tags' ? `0 0 12px ${newColor}20` : 'none'
-                      }}
-                    />
-                  </div>
                 </div>
               </section>
 
               {/* Path & Folder */}
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg">
-                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
+              <section className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl p-4 shadow-lg">
+                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-[var(--text-dim)] pl-1 flex items-center gap-2">
                   <Folder size={12} /> Placement
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Path Category</h4>
+                    <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Path Category</h4>
                     <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
                       {HABIT_CATEGORIES.map(cat => {
                         const isSelected = newCategory === cat;
@@ -2398,8 +2421,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             onClick={() => setNewCategory(cat)}
                             className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
                               isSelected 
-                                ? 'bg-white/20 text-white border-white/20 shadow-md' 
-                                : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
+                                ? 'bg-[var(--theme-accent)] text-[var(--bg-primary)] border-[var(--theme-accent)] shadow-md' 
+                                : 'bg-transparent text-[var(--text-dim)] border-[var(--border-primary)] hover:bg-white/10 hover:text-[var(--text-muted)]'
                             }`}
                           >
                             {cat}
@@ -2411,14 +2434,14 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
                   {folders.length > 0 && (
                     <div>
-                      <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Assign Folder</h4>
+                      <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Assign Folder</h4>
                       <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
                         <button
                           onClick={() => setNewFolderId(null)}
                           className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
                             newFolderId === null 
-                              ? 'bg-white/20 text-white border-white/20 shadow-md' 
-                              : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
+                              ? 'bg-[var(--theme-accent)] text-[var(--bg-primary)] border-[var(--theme-accent)] shadow-md' 
+                              : 'bg-transparent text-[var(--text-dim)] border-[var(--border-primary)] hover:bg-white/10 hover:text-[var(--text-muted)]'
                           }`}
                         >
                           None
@@ -2431,8 +2454,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                               onClick={() => setNewFolderId(folder.id)}
                               className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border flex items-center gap-1.5 ${
                                 isSelected 
-                                  ? 'bg-white/20 text-white border-white/20 shadow-md' 
-                                  : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
+                                  ? 'bg-[var(--theme-accent)] text-[var(--bg-primary)] border-[var(--theme-accent)] shadow-md' 
+                                  : 'bg-transparent text-[var(--text-dim)] border-[var(--border-primary)] hover:bg-white/10 hover:text-[var(--text-muted)]'
                               }`}
                             >
                               <Folder size={10} />
@@ -2447,13 +2470,13 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               </section>
 
               {/* Appearance */}
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg">
-                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-white/50 pl-1 flex items-center gap-2">
+              <section className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl p-4 shadow-lg">
+                <h3 className="text-[10px] font-black uppercase tracking-[2px] mb-4 text-[var(--text-dim)] pl-1 flex items-center gap-2">
                   <Wind size={12} /> Appearance
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Color Shade</h4>
+                    <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Color Shade</h4>
                     <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-2 snap-x no-scrollbar">
                       {ACCENT_COLORS.map(color => (
                         <div key={color} className="flex flex-col items-center shrink-0 snap-center p-1.5">
@@ -2477,7 +2500,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                   </div>
 
                   <div>
-                    <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Ritual Icon</h4>
+                    <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Ritual Icon</h4>
                     <div className="grid grid-cols-6 gap-2">
                       {(Object.keys(ICON_MAP) as Array<keyof typeof ICON_MAP>).map(iconKey => {
                         const Icon = ICON_MAP[iconKey];
@@ -2488,12 +2511,12 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             onClick={() => setNewIcon(iconKey)}
                             className={`aspect-square rounded-xl flex items-center justify-center transition-all border ${
                               isSelected 
-                                ? 'scale-105 shadow-md bg-white/10' 
-                                : 'border-transparent opacity-40 hover:opacity-80 bg-black/20'
+                                ? 'scale-105 shadow-md bg-[var(--theme-accent)]' 
+                                : 'border-transparent opacity-40 hover:opacity-80 bg-[var(--bg-stats)]'
                             }`}
                             style={{
                               borderColor: isSelected ? newColor : 'transparent',
-                              color: isSelected ? newColor : '#ffffff',
+                              color: isSelected ? 'var(--bg-primary)' : 'var(--text-primary)',
                               boxShadow: isSelected ? `0 0 10px ${newColor}30` : undefined,
                               opacity: isSelected ? 1 : 0.4
                             }}
@@ -2508,15 +2531,15 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               </section>
 
               {/* Logistics */}
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-lg mb-8">
+              <section className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl p-4 shadow-lg mb-8">
                 <div className="flex items-center justify-between pb-1">
-                  <h3 className="text-[10px] font-black uppercase tracking-[2px] text-white/50 pl-1 flex items-center gap-2 m-0">
+                  <h3 className="text-[10px] font-black uppercase tracking-[2px] text-[var(--text-muted)] pl-1 flex items-center gap-2 m-0">
                     <Timer size={12} /> Reminder
                   </h3>
                   <ToggleSwitch 
                     checked={newReminderActive} 
                     onChange={(e) => setNewReminderActive(e.target.checked)} 
-                    themeColor={(THEMES[settings.theme] || THEMES.VOID).primary} 
+                    themeColor={(THEMES[settings.theme] || THEMES.BLACK).primary} 
                   />
                 </div>
 
@@ -2527,16 +2550,16 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     className="pt-4 space-y-4"
                   >
                     <div>
-                       <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Time</h4>
+                       <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Time</h4>
                        <input 
                          type="time" 
                          value={newReminderTime}
                          onChange={(e) => setNewReminderTime(e.target.value)}
-                         className="w-full bg-black/40 border border-white/10 px-4 py-2.5 rounded-xl text-[14px] font-bold text-white focus:outline-none focus:border-white/30 transition-all cursor-pointer"
+                         className="w-full bg-[var(--bg-input)] border border-[var(--border-primary)] px-4 py-2.5 rounded-xl text-[14px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--theme-accent)] transition-all cursor-pointer"
                        />
                     </div>
                     <div>
-                      <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Days</h4>
+                      <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Days</h4>
                       <div className="flex justify-between gap-1">
                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => {
                           const isSelected = newReminderDays.includes(i);
@@ -2548,7 +2571,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                 else setNewReminderDays([...newReminderDays, i]);
                               }}
                               className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all border ${
-                                isSelected ? 'bg-blue-500 border-blue-400 text-white shadow-md' : 'bg-black/40 border-white/10 text-white/40'
+                                isSelected ? 'bg-blue-500 border-blue-400 text-white shadow-md' : 'bg-[var(--bg-input)] border-[var(--border-primary)] text-[var(--text-dim)]'
                               }`}
                             >
                               {day}
@@ -2556,7 +2579,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           );
                         })}
                       </div>
-                      <p className="hint-text text-[9px] text-white/30 mt-2 ml-1 italic">{newReminderDays.length === 0 ? 'Reminding daily' : `Reminding ${newReminderDays.length} day(s) a week`}</p>
+                      <p className="hint-text text-[9px] text-[var(--text-dim)] mt-2 ml-1 italic">{newReminderDays.length === 0 ? 'Reminding daily' : `Reminding ${newReminderDays.length} day(s) a week`}</p>
                     </div>
                   </motion.div>
                 )}
@@ -2567,7 +2590,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 disabled={!newName.trim()}
                 className="w-full py-4 rounded-xl text-[14px] font-black uppercase tracking-[0.15em] transition-all active:scale-[0.98] disabled:opacity-30 disabled:scale-100 flex items-center justify-center gap-2 shadow-xl"
                 style={{ 
-                  backgroundColor: (THEMES[settings.theme] || THEMES.VOID).primary,
+                  backgroundColor: (THEMES[settings.theme] || THEMES.BLACK).primary,
                   color: '#ffffff'
                 }}
               >
@@ -2589,36 +2612,36 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm rounded-[32px] p-8 border border-white/10 bg-neutral-900 shadow-2xl relative overflow-hidden"
+              className="w-full max-w-sm rounded-[32px] p-8 border border-[var(--border-primary)] bg-[var(--bg-modal)] shadow-2xl relative overflow-hidden"
             >
               <div 
                 className="absolute inset-0 opacity-20"
                 style={{ 
-                  background: `radial-gradient(circle at 50% 0%, ${(THEMES[settings.theme] || THEMES.VOID).primary}, transparent 70%)` 
+                  background: `radial-gradient(circle at 50% 0%, ${(THEMES[settings.theme] || THEMES.BLACK).primary}, transparent 70%)` 
                 }} 
               />
               <div className="relative z-10">
                 <div className="flex justify-center mb-6">
                   <div 
-                    className="w-16 h-16 rounded-full flex items-center justify-center border border-white/20 shadow-lg"
-                    style={{ background: `linear-gradient(135deg, ${(THEMES[settings.theme] || THEMES.VOID).primary}40, transparent)` }}
+                    className="w-16 h-16 rounded-full flex items-center justify-center border border-[var(--border-primary)] shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${(THEMES[settings.theme] || THEMES.BLACK).primary}40, transparent)` }}
                   >
                     {React.createElement(TUTORIAL_STEPS[currentTutorialStep].icon, { 
                       size: 32, 
-                      style: { color: (THEMES[settings.theme] || THEMES.VOID).primary } 
+                      style: { color: (THEMES[settings.theme] || THEMES.BLACK).primary } 
                     })}
                   </div>
                 </div>
                 
                 <div className="text-center mb-8">
-                  <h2 className="text-[24px] font-black tracking-tight text-white mb-3">
+                  <h2 className="text-[24px] font-black tracking-tight text-[var(--text-primary)] mb-3">
                     {TUTORIAL_STEPS[currentTutorialStep].title}
                   </h2>
-                  <p className="text-white/60 text-[14px] leading-relaxed font-medium">
+                  <p className="text-[var(--text-muted)] text-[14px] leading-relaxed font-medium">
                     {TUTORIAL_STEPS[currentTutorialStep].text}
                   </p>
                 </div>
-
+                
                 <div className="flex items-center justify-between gap-4 mt-8">
                   {/* Dots indicator */}
                   <div className="flex items-center gap-2">
@@ -2628,7 +2651,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                         className={`h-2 rounded-full transition-all duration-300 ${
                           idx === currentTutorialStep 
                             ? 'w-6 bg-amber-500' 
-                            : 'w-2 bg-white/20'
+                            : 'w-2 bg-[var(--bg-input)]'
                         }`}
                       />
                     ))}
@@ -2643,7 +2666,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                         setSettings(s => ({ ...s, hasSeenTutorial: true }));
                       }
                     }}
-                    className="px-6 py-3 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-[12px] hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                    className="px-6 py-3 rounded-2xl bg-[var(--text-primary)] text-[var(--bg-primary)] font-black uppercase tracking-widest text-[12px] hover:scale-105 active:scale-95 transition-all shadow-lg"
                   >
                     {currentTutorialStep < TUTORIAL_STEPS.length - 1 ? 'Next' : 'Embark'}
                   </button>
@@ -2668,15 +2691,15 @@ const triggerConfetti = (x: number, y: number, color: string) => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="p-6 rounded-2xl w-full max-w-sm bg-[#16162a] border border-[#2a2a45]"
+              className="p-6 rounded-2xl w-full max-w-sm bg-[var(--bg-modal)] border border-[var(--border-primary)]"
               onClick={e => e.stopPropagation()}
             >
               <h3 className="text-xl font-bold mb-2">Delete Ritual?</h3>
-              <p className="text-white/50 mb-6 font-light">This action cannot be undone.</p>
+              <p className="text-[var(--text-muted)] mb-6 font-light">This action cannot be undone.</p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setHabitToDelete(null)}
-                  className="flex-1 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm font-bold text-white/80"
+                  className="flex-1 py-2.5 rounded-lg bg-[var(--bg-input)] hover:bg-[var(--border-primary)] transition-colors text-sm font-bold text-[var(--text-muted)]"
                 >
                   Cancel
                 </button>
@@ -2703,27 +2726,27 @@ const triggerConfetti = (x: number, y: number, color: string) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[100] text-white overflow-y-auto no-scrollbar modal"
+            className="fixed inset-0 z-[100] text-[var(--text-primary)] overflow-y-auto no-scrollbar modal"
             style={{ backgroundColor: 'var(--bg-primary)', WebkitOverflowScrolling: 'touch' }}
           >
             <WatermarkBackground pureBlack={settings.pureBlack} />
 
             {/* Header */}
-            <div className="px-4 py-4 flex items-center justify-between gap-4 bg-[#12121f] sticky top-0 z-20 border-b border-white/5">
+            <div className="px-4 py-4 flex items-center justify-between gap-4 bg-[var(--bg-header)] sticky top-0 z-20 border-b border-[var(--border-primary)]">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => {
                     setSelectedHabitId(null);
                     setIsEditingDetails(false);
                   }}
-                  className="p-2 -ml-2 text-white hover:text-white/80 transition-colors"
+                  className="p-2 -ml-2 text-[var(--text-primary)] hover:text-[var(--text-muted)] transition-colors"
                 >
                   <motion.svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="19" y1="12" x2="5" y2="12"></line>
                     <polyline points="12 19 5 12 12 5"></polyline>
                   </motion.svg>
                 </button>
-                <h2 className="text-xl font-bold tracking-wide text-white">
+                <h2 className="text-xl font-bold tracking-wide text-[var(--text-primary)]">
                   {isEditingDetails ? 'Adjust Ritual' : 'Ritual Details'}
                 </h2>
               </div>
@@ -2737,7 +2760,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                     }
                   }}
                   className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.1em] transition-all active:scale-95 ${
-                    isEditingDetails ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white hover:bg-white/20'
+                    isEditingDetails ? 'bg-emerald-500 text-black' : 'bg-[var(--bg-input)] text-[var(--text-primary)] hover:bg-[var(--border-primary)]'
                   }`}
                 >
                   {isEditingDetails ? 'Save Changes' : 'Edit Ritual'}
@@ -2745,7 +2768,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 {isEditingDetails && (
                   <button
                     onClick={() => setIsEditingDetails(false)}
-                    className="p-1.5 rounded-full bg-white/5 text-white/40 hover:text-white/80"
+                    className="p-1.5 rounded-full bg-[var(--bg-input)] text-[var(--text-dim)] hover:text-[var(--text-muted)]"
                   >
                     <motion.svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2761,76 +2784,37 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                 if (!selectedHabit || !selectedHabitStats) return null;
                 const habitColor = selectedHabit.color;
                 const IconComponent = ICON_MAP[selectedHabit.icon] || Wind;
-                const { cells, totalDone, streak, bestStreak, heatmapWeeks, weeklyData, chartData, overallCompletionRate } = selectedHabitStats;
+                const { cells, totalDone, streak, bestStreak, weeklyData, chartData, overallCompletionRate } = selectedHabitStats;
 
                 return (
                   <>
-                    <div className="p-4 rounded-2xl space-y-4 shadow-lg bg-[#1e1e2e] border border-[#2a2a45]" style={{backgroundColor: 'rgba(255,255,255,0.05)'}}>
+                    <div className="p-4 rounded-2xl space-y-4 shadow-sm bg-[var(--bg-card)] border border-[var(--border-primary)]">
                       {isEditingDetails ? (
                         <div className="space-y-6">
                           <div className="space-y-3">
                              <div>
-                               <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Ritual Title</h4>
+                               <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Ritual Title</h4>
                                <input 
                                  type="text" 
                                  value={editName}
                                  onChange={(e) => setEditName(e.target.value)}
-                                 className="w-full bg-black/40 border border-white/10 px-4 py-3 rounded-xl text-[15px] font-bold text-white focus:outline-none focus:border-white/30 transition-all"
+                                 className="w-full bg-[var(--bg-input)] border border-[var(--border-primary)] px-4 py-3 rounded-xl text-[15px] font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--theme-accent)] transition-all"
                                />
                              </div>
                              <div>
-                               <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Ritual Intent</h4>
+                               <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Ritual Intent</h4>
                                <input 
                                  type="text" 
                                  value={editIntent}
                                  onChange={(e) => setEditIntent(e.target.value)}
                                  placeholder="Why does this matter?"
-                                 className="w-full bg-black/40 border border-white/10 px-4 py-3 rounded-xl text-[14px] font-medium text-white focus:outline-none focus:border-white/30 transition-all italic"
-                               />
-                             </div>
-                             
-                             {/* Tags Input (Edit) */}
-                             <div>
-                               <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Tags</h4>
-                               <div className="flex flex-wrap gap-2 mb-2">
-                                 {editTags.map(tag => (
-                                   <span key={tag} className="px-2 py-1 bg-white/10 rounded-full text-[10px] font-bold text-white flex items-center gap-1 border border-white/10">
-                                     #{tag}
-                                     <button onClick={() => setEditTags(prev => prev.filter(t => t !== tag))} className="text-white/40 hover:text-white">
-                                       <X size={10} />
-                                     </button>
-                                   </span>
-                                 ))}
-                               </div>
-                               <input 
-                                 type="text" 
-                                 value={editTagInput}
-                                 onChange={(e) => setEditTagInput(e.target.value)}
-                                 onKeyDown={(e) => {
-                                   if (e.key === 'Enter' || e.key === ',') {
-                                     e.preventDefault();
-                                     const val = editTagInput.trim().replace(/^#/, '');
-                                     if (val && !editTags.includes(val)) {
-                                       setEditTags(prev => [...prev, val]);
-                                     }
-                                     setEditTagInput('');
-                                   }
-                                 }}
-                                 onBlur={() => {
-                                   const val = editTagInput.trim().replace(/^#/, '');
-                                   if (val && !editTags.includes(val)) {
-                                     setEditTags(prev => [...prev, val]);
-                                   }
-                                   setEditTagInput('');
-                                 }}
-                                 placeholder="Add tags (press Enter to add)"
-                                 className="w-full bg-black/40 border border-white/10 px-4 py-3 rounded-xl text-[13px] font-medium text-white focus:outline-none focus:border-white/30 transition-all"
+                                 className="w-full bg-[var(--bg-input)] border border-[var(--border-primary)] px-4 py-3 rounded-xl text-[14px] font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--theme-accent)] transition-all italic"
                                />
                              </div>
                           </div>
 
                           <div>
-                            <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Path Category</h4>
+                            <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Path Category</h4>
                             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
                               {HABIT_CATEGORIES.map(cat => {
                                 const isSelected = editCategory === cat;
@@ -2840,8 +2824,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                     onClick={() => setEditCategory(cat)}
                                     className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
                                       isSelected 
-                                        ? 'bg-white/20 text-white border-white/20 shadow-md' 
-                                        : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
+                                        ? 'bg-[var(--theme-accent)] text-[var(--bg-primary)] border-[var(--theme-accent)] shadow-md' 
+                                        : 'bg-transparent text-[var(--text-dim)] border-[var(--border-primary)] hover:bg-white/10 hover:text-[var(--text-muted)]'
                                     }`}
                                   >
                                     {cat}
@@ -2853,14 +2837,14 @@ const triggerConfetti = (x: number, y: number, color: string) => {
 
                           {folders.length > 0 && (
                             <div>
-                              <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Assigned Folder</h4>
+                              <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Assigned Folder</h4>
                               <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
                                 <button
                                   onClick={() => setEditFolderId(null)}
                                   className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${
                                     editFolderId === null 
-                                      ? 'bg-white/20 text-white border-white/20 shadow-md' 
-                                      : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
+                                      ? 'bg-[var(--theme-accent)] text-[var(--bg-primary)] border-[var(--theme-accent)] shadow-md' 
+                                      : 'bg-transparent text-[var(--text-dim)] border-[var(--border-primary)] hover:bg-white/10 hover:text-[var(--text-muted)]'
                                   }`}
                                 >
                                   None
@@ -2873,8 +2857,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                       onClick={() => setEditFolderId(folder.id)}
                                       className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border flex items-center gap-1.5 ${
                                         isSelected 
-                                          ? 'bg-white/20 text-white border-white/20 shadow-md' 
-                                          : 'bg-transparent text-white/40 border-white/10 hover:bg-white/10 hover:text-white/80'
+                                          ? 'bg-[var(--theme-accent)] text-[var(--bg-primary)] border-[var(--theme-accent)] shadow-md' 
+                                          : 'bg-transparent text-[var(--text-dim)] border-[var(--border-primary)] hover:bg-white/10 hover:text-[var(--text-muted)]'
                                       }`}
                                     >
                                       <Folder size={10} />
@@ -2887,8 +2871,8 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           )}
 
                           <div>
-                            <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Visual Essence</h4>
-                            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-2 snap-x no-scrollbar text-white">
+                            <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Visual Essence</h4>
+                            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-2 snap-x no-scrollbar text-[var(--text-primary)]">
                               {ACCENT_COLORS.map(color => (
                                 <div key={color} className="shrink-0 snap-center p-1.5">
                                   <button
@@ -2912,7 +2896,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           </div>
 
                           <div>
-                            <h4 className="text-[10px] font-bold text-white/60 ml-1 mb-2 uppercase tracking-[1px]">Ritual Icon</h4>
+                            <h4 className="text-[10px] font-bold text-[var(--text-muted)] ml-1 mb-2 uppercase tracking-[1px]">Ritual Icon</h4>
                             <div className="grid grid-cols-6 gap-2">
                               {(Object.keys(ICON_MAP) as Array<keyof typeof ICON_MAP>).map(iconKey => {
                                 const Icon = ICON_MAP[iconKey];
@@ -2922,9 +2906,9 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                     key={iconKey}
                                     onClick={() => setEditIcon(iconKey)}
                                     className={`aspect-square rounded-xl flex items-center justify-center transition-all border ${
-                                      isSelected ? 'border-white/40 bg-white/10 shadow-md' : 'border-transparent bg-black/20 opacity-40 hover:opacity-100'
+                                      isSelected ? 'border-[var(--theme-accent)] bg-[var(--theme-accent)] shadow-md' : 'border-transparent bg-[var(--bg-stats)] opacity-40 hover:opacity-100'
                                     }`}
-                                    style={{ color: isSelected ? editColor : '#ffffff' }}
+                                    style={{ color: isSelected ? 'var(--bg-primary)' : 'var(--text-primary)' }}
                                   >
                                     <Icon size={16} />
                                   </button>
@@ -2951,13 +2935,13 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                         </div>
                       ) : (
                         <div className="flex items-center gap-5">
-                          <div className="p-4 rounded-2xl flex items-center justify-center border border-white/5" style={{ backgroundColor: `${habitColor}15`, color: habitColor }}>
+                          <div className="p-4 rounded-2xl flex items-center justify-center border border-[var(--border-primary)]" style={{ backgroundColor: `${habitColor}15`, color: habitColor }}>
                             <IconComponent size={36} />
                           </div>
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                                {selectedHabit.category && (
-                                   <span className="text-[9px] font-black uppercase tracking-wider text-theme-secondary opacity-50 px-2 py-0.5 rounded bg-white/5 font-sans">{selectedHabit.category}</span>
+                                   <span className="text-[9px] font-black uppercase tracking-wider text-theme-secondary opacity-50 px-2 py-0.5 rounded bg-[var(--bg-input)] font-sans">{selectedHabit.category}</span>
                                )}
                                {selectedHabit.folderId && folders.find(f => f.id === selectedHabit.folderId) && (
                                    <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 opacity-80 px-2 py-0.5 rounded bg-emerald-400/10 font-sans flex items-center gap-1">
@@ -2966,23 +2950,19 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                    </span>
                                )}
                             </div>
-                            <h3 className="text-2xl font-bold">{selectedHabit.name}</h3>
-                            {selectedHabit.intent && <p className="text-white/60 text-sm mt-1 flex items-center gap-2 font-light italic"><Star size={14} className="text-yellow-500" /> {selectedHabit.intent}</p>}
+                            <h3 className="text-2xl font-bold text-[var(--text-primary)]">{selectedHabit.name}</h3>
+                            {selectedHabit.intent && <p className="text-[var(--text-muted)] text-sm mt-1 flex items-center gap-2 font-light italic"><Star size={14} className="text-yellow-500" /> {selectedHabit.intent}</p>}
                           </div>
                         </div>
                       )}
                     </div>
 
-                    <DetailStats totalDone={totalDone} streak={streak} bestStreak={bestStreak} completionRate={overallCompletionRate} />
-
-                    <VoyageMap heatmapWeeks={heatmapWeeks} habitColor={habitColor} />
-
                     {/* Reminder Settings */}
-                    <div className="p-5 bg-[#1e1e2e] border border-[#2a2a45] rounded-2xl">
+                    <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <Timer size={20} className={selectedHabit.reminder?.active ? 'text-blue-400' : 'text-white/30'} />
-                          <h4 className="text-lg font-bold">Logistics</h4>
+                          <Timer size={20} className={selectedHabit.reminder?.active ? 'text-blue-400' : 'text-[var(--text-dim)]'} />
+                          <h4 className="text-lg font-bold text-[var(--text-primary)]">Logistics</h4>
                         </div>
                         <ToggleSwitch 
                           checked={!!selectedHabit.reminder?.active} 
@@ -2994,14 +2974,14 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                               reminder: { ...(h.reminder || { time: '09:00' }), active: newActive }
                             } : h));
                           }} 
-                          themeColor={(THEMES[settings.theme] || THEMES.VOID).primary} 
+                          themeColor={(THEMES[settings.theme] || THEMES.BLACK).primary} 
                         />
                       </div>
                       
                       {selectedHabit.reminder?.active && (
                         <div className="space-y-4">
                           <div>
-                            <p className="text-white/50 text-[10px] uppercase tracking-widest font-bold mb-2">Reminder Time</p>
+                            <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-widest font-bold mb-2">Reminder Time</p>
                             <input 
                               type="time" 
                               value={selectedHabit.reminder?.time || '09:00'}
@@ -3012,12 +2992,12 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                   reminder: { ...(h.reminder!), time: newTime }
                                 } : h));
                               }}
-                              className="w-full bg-white/[0.08] border border-white/10 px-4 py-2.5 rounded-xl text-white focus:outline-none focus:border-blue-500/50 transition-all font-mono"
+                              className="w-full bg-[var(--bg-input)] border border-[var(--border-primary)] px-4 py-2.5 rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-blue-500/50 transition-all font-mono"
                             />
                           </div>
                           
                           <div>
-                            <p className="text-white/50 text-[10px] uppercase tracking-widest font-bold mb-2">Weekly Schedule</p>
+                            <p className="text-[var(--text-dim)] text-[10px] uppercase tracking-widest font-bold mb-2">Weekly Schedule</p>
                             <div className="flex justify-between gap-1">
                               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => {
                                 const days = selectedHabit.reminder?.days || [];
@@ -3033,7 +3013,7 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                       } : h));
                                     }}
                                     className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold transition-all border ${
-                                      isSelected ? 'bg-blue-500 border-blue-400 text-white shadow-lg' : 'bg-white/5 border-white/10 text-white/30'
+                                      isSelected ? 'bg-blue-500 border-blue-400 text-white shadow-lg' : 'bg-[var(--bg-input)] border-[var(--border-primary)] text-[var(--text-dim)]'
                                     }`}
                                   >
                                     {day}
@@ -3041,24 +3021,26 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                 );
                               })}
                             </div>
-                            <p className="text-[10px] text-white/20 mt-2 italic">{(!selectedHabit.reminder?.days || selectedHabit.reminder.days.length === 0) ? 'Every day of the week' : 'Selected days only'}</p>
+                            <p className="text-[10px] text-[var(--text-dim)] mt-2 italic">{(!selectedHabit.reminder?.days || selectedHabit.reminder.days.length === 0) ? 'Every day of the week' : 'Selected days only'}</p>
                           </div>
                         </div>
                       )}
                       {!selectedHabit.reminder?.active && (
-                        <p className="text-white/30 text-sm italic">Daily reminders are currently silent.</p>
+                        <p className="text-[var(--text-dim)] text-sm italic">Daily reminders are currently silent.</p>
                       )}
                     </div>
 
-                    <div className="p-5 sm:p-6 rounded-2xl bg-[#1e1e2e] border border-[#2a2a45]">
+                    <DetailStats totalDone={totalDone} streak={streak} bestStreak={bestStreak} completionRate={overallCompletionRate} />
+
+                    <div className="p-5 sm:p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-primary)]">
                       <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-[17px] font-bold text-white tracking-tight uppercase">Progress Visualization</h4>
-                        <div className="px-2 py-1 bg-white/10 rounded-lg border border-white/20">
-                          <span className="text-[10px] font-bold text-white uppercase tracking-wider">Completion Density</span>
+                        <h4 className="text-[17px] font-bold text-[var(--text-primary)] tracking-tight uppercase">Progress Visualization</h4>
+                        <div className="px-2 py-1 bg-[var(--bg-input)] rounded-lg border border-[var(--border-primary)]">
+                          <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Completion Density</span>
                         </div>
                       </div>
                       
-                      <div className="h-48 w-full mb-8">
+                      <div className="h-48 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart data={weeklyData}>
                             <defs>
@@ -3067,16 +3049,16 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                                 <stop offset="95%" stopColor={habitColor} stopOpacity={0}/>
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" vertical={false} />
                             <XAxis 
                               dataKey="name" 
-                              stroke="rgba(255,255,255,0.3)" 
+                              stroke="var(--text-dim)" 
                               fontSize={10} 
                               tickLine={false} 
                               axisLine={false}
                             />
                             <YAxis 
-                              stroke="rgba(255,255,255,0.3)" 
+                              stroke="var(--text-dim)" 
                               fontSize={10} 
                               tickLine={false} 
                               axisLine={false}
@@ -3084,10 +3066,11 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                             />
                             <Tooltip 
                               contentStyle={{ 
-                                backgroundColor: 'rgba(0,0,0,0.8)', 
-                                border: '1px solid rgba(255,255,255,0.1)', 
+                                backgroundColor: 'var(--bg-modal)', 
+                                border: '1px solid var(--border-primary)', 
                                 borderRadius: '12px',
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                color: 'var(--text-primary)'
                               }}
                               itemStyle={{ color: habitColor }}
                             />
@@ -3103,50 +3086,10 @@ const triggerConfetti = (x: number, y: number, color: string) => {
                           </AreaChart>
                         </ResponsiveContainer>
                       </div>
-
-                      <div className="h-32 w-full">
-                        <h5 className="text-[10px] font-bold text-white/30 uppercase tracking-[2px] mb-4">Daily Volume (Last 14 Days)</h5>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={chartData}>
-                            <Bar dataKey="completed" radius={[4, 4, 0, 0]}>
-                              {chartData.map((entry, index) => (
-                                <Cell 
-                                  key={`cell-${index}`} 
-                                  fill={entry.status === 'done' ? habitColor : 'rgba(255,255,255,0.05)'} 
-                                />
-                              ))}
-                            </Bar>
-                            <XAxis 
-                                dataKey="name" 
-                                stroke="rgba(255,255,255,0.3)"
-                                fontSize={9}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <Tooltip 
-                                cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                                content={({ active, payload }) => {
-                                    if (active && payload && payload.length) {
-                                        const data = payload[0].payload;
-                                        return (
-                                            <div className="bg-black/90 p-2 border border-white/10 rounded-lg text-[10px]">
-                                                <p className="font-bold">{data.name}</p>
-                                                <p className={data.status === 'done' ? 'text-emerald-400' : 'text-white/40'}>
-                                                    {data.status === 'done' ? 'Succeeded' : data.status === 'skip' ? 'Strategic Skip' : 'Not Attempted'}
-                                                </p>
-                                            </div>
-                                        );
-                                    }
-                                    return null;
-                                }}
-                            />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
                     </div>
 
                     <CalendarCellGrid 
-                      cells={cells} 
+                      logs={selectedHabit.logs || {}} 
                       habitColor={habitColor} 
                       onToggle={(date, e) => toggleHabit(selectedHabit.id, date, e)} 
                     />
